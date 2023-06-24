@@ -1,12 +1,17 @@
 project(
     'quakespasm',
-    'c',
+    ['c'],
     version : '0.0.1',
     default_options : [
         'warning_level=3',
         'b_ndebug=if-release',
     ]
 )
+
+cc = meson.get_compiler('c')
+libm = cc.find_library('m', required : true)
+
+deps = [libm]
 
 if get_option('enable_userdirs')
   add_project_arguments('-DDO_USERDIRS', language: 'c')
@@ -25,11 +30,13 @@ if get_option('use_codec_opus')
 endif
 if get_option('use_codec_vorbis')
   add_project_arguments('-DUSE_CODEC_VORBIS', language: 'c')
-  # CODECLIBS+= $(lib_vorbisdec)
+  deps += cc.find_library('vorbis', required : true)
+  deps += cc.find_library('ogg', required : true)
+  deps += cc.find_library('vorbisfile', required : true)
 endif
 if get_option('use_codec_mp3')
   add_project_arguments('-DUSE_CODEC_MP3', language: 'c')
-  # CODECLIBS+= $(lib_mp3dec)
+  deps += cc.find_library('mad', required : true)
 endif
 if get_option('use_codec_mikmod')
   add_project_arguments('-DUSE_CODEC_MIKMOD', language: 'c')
@@ -50,6 +57,7 @@ inc_dirs = [
 subdir('Quake')
 
 quake_dep = declare_dependency(
-    link_with : [quake_lib],
+    link_with: [quake_lib],
+    dependencies: deps,
     include_directories : inc_dirs
 )

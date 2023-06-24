@@ -1340,4 +1340,8 @@ void R_RebuildAllLightmaps (void)
 				 GL_UNSIGNED_BYTE, lightmaps[i].data);
 	}
 }
+#else
+void R_RebuildAllLightmaps (void) {}
+
+
 #endif

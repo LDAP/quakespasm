@@ -372,8 +372,6 @@ void Sys_Error (const char *error, ...)
 	q_vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
-  assert(0);
-
 	fputs (errortxt1, stderr);
 	Host_Shutdown ();
 	fputs (errortxt2, stderr);
@@ -382,6 +380,7 @@ void Sys_Error (const char *error, ...)
 	if (!isDedicated)
 		PL_ErrorDialog(text);
 
+	assert(0);
 	exit (1);
 }
 

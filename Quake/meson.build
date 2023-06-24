@@ -19,9 +19,8 @@ SYSOBJ_SYS = files('pl_linux.c', 'vid.c', 'sys_sdl_unix.c', 'cd_null.c', 'in_nul
 GLOBJS = files(
     'gl_refrag.c',
     'gl_rlight.c',
-    'gl_rmain.c',
+    'r_alias.c',
     'gl_fog.c',
-    'gl_rmisc.c',
     'r_part.c',
     'r_world.c',
     'gl_screen.c',
@@ -32,14 +31,17 @@ GLOBJS = files(
     'gl_texmgr.c',
     'gl_mesh.c',
     'r_sprite.c',
-    'r_alias.c',
-    'r_brush.c',
     'gl_model.c',
+    'r_brush.c',
+    'gl_rmisc.c',
+    'gl_rmain.c',
 )
 
-OBJS = files(
+STR_OBJS = files(
     'strlcat.c',
     'strlcpy.c',
+)
+OBJS = files(
     'net_dgrm.c',
     'net_loop.c',
     'net_main.c',
@@ -73,13 +75,12 @@ OBJS = files(
     'sv_user.c',
     'world.c',
     'zone.c',
-) + SYSOBJ_SYS + GLOBJS + COMOBJ_SND + SYSOBJ_NET
+)
 
 quake_lib = static_library(
     'quakespasm',
-    [OBJS],
-    dependencies: [
-    ],
+    [STR_OBJS, GLOBJS, COMOBJ_SND, SYSOBJ_NET, OBJS, SYSOBJ_SYS],
+    dependencies: [],
     include_directories: inc_dirs,
-    install : true
+    install : true,
 )

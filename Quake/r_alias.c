@@ -1001,4 +1001,8 @@ void R_DrawAliasModel_ShowTris (entity_t *e)
 
 	glPopMatrix ();
 }
+#else
+
+void R_DrawAliasModel (entity_t *e) {}
+
 #endif

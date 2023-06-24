@@ -50,6 +50,8 @@ extern cvar_t gl_zfix; // QuakeSpasm z-fighting fix
 
 extern gltexture_t *playertextures[MAX_SCOREBOARD]; //johnfitz
 
+void GL_BeginRendering (int *x, int *y, int *width, int *height) {}
+void GL_EndRendering (void) {}
 
 /*
 ====================
