@@ -8,10 +8,31 @@ project(
     ]
 )
 
+project_dir  = meson.current_source_dir()
 cc = meson.get_compiler('c')
-libm = cc.find_library('m', required : true)
+is_windows = build_machine.system() == 'windows'
+deps = []
+lib_search_paths = []
 
-deps = [libm]
+if is_windows
+    if build_machine.cpu_family() == 'x86_64'
+        codec_path = join_paths(project_dir, 'Windows/codecs/x64')
+    elif build_machine.cpu_family() == 'x86'
+        codec_path = join_paths(project_dir, 'Windows/codecs/x86')
+    else
+        error('system not supported')
+    endif
+
+    lib_search_paths += codec_path
+
+    # Maybe there is an cleaner way to get those installed...
+    install_data(codec_path / 'libmad-0.dll', install_dir : get_option('bindir'))
+
+    add_project_arguments('-D_USE_WINSOCK2', language: 'c')
+	deps += cc.find_library('ws2_32', required: true)
+endif
+
+deps += cc.find_library('m', required : not is_windows)
 
 if get_option('enable_userdirs')
   add_project_arguments('-DDO_USERDIRS', language: 'c')
@@ -30,13 +51,13 @@ if get_option('use_codec_opus')
 endif
 if get_option('use_codec_vorbis')
   add_project_arguments('-DUSE_CODEC_VORBIS', language: 'c')
-  deps += cc.find_library('vorbis', required : true)
-  deps += cc.find_library('ogg', required : true)
-  deps += cc.find_library('vorbisfile', required : true)
+  deps += cc.find_library('vorbis', required : true, dirs : lib_search_paths)
+  deps += cc.find_library('ogg', required : true, dirs : lib_search_paths)
+  deps += cc.find_library('vorbisfile', required : true, dirs : lib_search_paths)
 endif
 if get_option('use_codec_mp3')
   add_project_arguments('-DUSE_CODEC_MP3', language: 'c')
-  deps += cc.find_library('mad', required : true)
+  deps += cc.find_library('mad', required : true, dirs : lib_search_paths)
 endif
 if get_option('use_codec_mikmod')
   add_project_arguments('-DUSE_CODEC_MIKMOD', language: 'c')
@@ -53,6 +74,12 @@ endif
 inc_dirs = [
     include_directories('./Quake'),
 ]
+
+if is_windows
+    inc_dirs += include_directories('Windows\SDL2\include',
+                                    'Windows\codecs\include',
+                                    'Windows\misc\include')
+endif
 
 subdir('Quake')
 

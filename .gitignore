@@ -1,2 +1,3 @@
 Quake/libquakespasm.a
 Quake/*.o
+.cache

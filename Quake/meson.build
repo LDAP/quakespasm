@@ -13,8 +13,18 @@ MUSIC_OBJS = files(
 )
 
 COMOBJ_SND = files('snd_dma.c', 'snd_mix.c', 'snd_mem.c') + MUSIC_OBJS
-SYSOBJ_NET = files('net_bsd.c', 'net_udp.c')
-SYSOBJ_SYS = files('pl_linux.c', 'vid.c', 'sys_sdl_unix.c', 'cd_null.c', 'in_null.c', 'snd_null.c')
+
+if is_windows
+    SYSOBJ_NET = files('net_win.c', 'net_wins.c', 'net_wipx.c')
+else
+    SYSOBJ_NET = files('net_bsd.c', 'net_udp.c')
+endif
+
+if is_windows
+    SYSOBJ_SYS = files('pl_null.c', 'vid.c', 'in_null.c', 'cd_null.c', 'snd_null.c', 'sys_sdl_win.c')
+else
+    SYSOBJ_SYS = files('pl_null.c', 'vid.c', 'sys_sdl_unix.c', 'cd_null.c', 'in_null.c', 'snd_null.c')
+endif
 
 GLOBJS = files(
     'gl_refrag.c',
@@ -80,7 +90,7 @@ OBJS = files(
 quake_lib = static_library(
     'quakespasm',
     [STR_OBJS, GLOBJS, COMOBJ_SND, SYSOBJ_NET, OBJS, SYSOBJ_SYS],
-    dependencies: [],
+    dependencies: deps,
     include_directories: inc_dirs,
     install : true,
 )
