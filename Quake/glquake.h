@@ -341,6 +341,10 @@ typedef struct glsl_attrib_binding_s {
 
 extern float	map_wateralpha, map_lavaalpha, map_telealpha, map_slimealpha; //ericw
 
+extern char	skybox_name[1024];
+extern gltexture_t	*skybox_textures[6];
+extern gltexture_t	*solidskytexture, *alphaskytexture;
+
 //johnfitz -- fog functions called from outside gl_fog.c
 void Fog_ParseServerMessage (void);
 float *Fog_GetColor (void);
