@@ -33,8 +33,6 @@ extern cvar_t	pausable;
 
 int	current_skill;
 
-void Mod_Print (void);
-
 /*
 ==================
 Host_Quit_f
@@ -952,7 +950,7 @@ static void Host_Reconnect_f (void)
 		return;
 
 	SCR_BeginLoadingPlaque ();
-	cls.signon = 0;		// need new connection messages
+	CL_ClearSignons ();		// need new connection messages
 }
 
 /*
@@ -1011,7 +1009,9 @@ static void Host_SavegameComment (char *text)
 	if (p1 != NULL) *p1 = 0;
 	if (p2 != NULL) *p2 = 0;
 
-	memcpy (text, cl.levelname, q_min(strlen(cl.levelname),22)); //johnfitz -- only copy 22 chars.
+	i = (int) strlen(cl.levelname);
+	if (i > 22) i = 22;
+	memcpy (text, cl.levelname, (size_t)i);
 	sprintf (kills,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	memcpy (text+22, kills, strlen(kills));
 // convert space to _ to make stdio happy
@@ -1180,7 +1180,7 @@ static void Host_Loadgame_f (void)
 	{
 		free (start);
 		start = NULL;
-		Con_Printf ("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
+		Host_Error ("Savegame is version %i, not %i", version, SAVEGAME_VERSION);
 		return;
 	}
 	data = COM_ParseStringNewline (data);
@@ -1203,6 +1203,7 @@ static void Host_Loadgame_f (void)
 	{
 		free (start);
 		start = NULL;
+		SCR_EndLoadingPlaque ();
 		Con_Printf ("Couldn't load map\n");
 		return;
 	}
@@ -1210,7 +1211,6 @@ static void Host_Loadgame_f (void)
 	sv.loadgame = true;
 
 // load the light styles
-
 	for (i = 0; i < MAX_LIGHTSTYLES; i++)
 	{
 		data = COM_ParseStringNewline (data);
@@ -1226,7 +1226,7 @@ static void Host_Loadgame_f (void)
 			break;		// end of file
 		if (strcmp(com_token,"{"))
 		{
-			Sys_Error ("First token isn't a brace");
+			Host_Error ("First token isn't a brace");
 		}
 
 		if (entnum == -1)
@@ -1242,6 +1242,7 @@ static void Host_Loadgame_f (void)
 			}
 			else {
 				memset (ent, 0, pr_edict_size);
+				ent->baseline.scale = ENTSCALE_DEFAULT;
 			}
 			data = ED_ParseEdict (data, ent);
 
@@ -1252,6 +1253,10 @@ static void Host_Loadgame_f (void)
 
 		entnum++;
 	}
+
+	// Free edicts allocated during map loading but no longer used after restoring saved game state
+	for (i = entnum; i < sv.num_edicts; i++)
+		ED_Free(EDICT_NUM(i));
 
 	sv.num_edicts = entnum;
 	sv.time = time;
@@ -1267,6 +1272,9 @@ static void Host_Loadgame_f (void)
 		CL_EstablishConnection ("local");
 		Host_Reconnect_f ();
 	}
+
+	if (cls.state != ca_dedicated)
+		IN_Activate(); // moved to here from M_Load_Key()
 }
 
 //============================================================================
@@ -1603,10 +1611,8 @@ static void Host_PreSpawn_f (void)
 		return;
 	}
 
-	SZ_Write (&host_client->message, sv.signon.data, sv.signon.cursize);
-	MSG_WriteByte (&host_client->message, svc_signonnum);
-	MSG_WriteByte (&host_client->message, 2);
-	host_client->sendsignon = true;
+	host_client->sendsignon = PRESPAWN_SIGNONBUFS;
+	host_client->signonidx = 0;
 }
 
 /*
@@ -1725,7 +1731,7 @@ static void Host_Spawn_f (void)
 
 	MSG_WriteByte (&host_client->message, svc_signonnum);
 	MSG_WriteByte (&host_client->message, 3);
-	host_client->sendsignon = true;
+	host_client->sendsignon = PRESPAWN_FLUSH;
 }
 
 /*
@@ -2225,7 +2231,7 @@ static void Host_Startdemos_f (void)
 	if (!sv.active && cls.demonum != -1 && !cls.demoplayback)
 	{
 		cls.demonum = 0;
-		if (!fitzmode)
+		if (!fitzmode && !cl_startdemos.value)
 		{  /* QuakeSpasm customization: */
 			/* go straight to menu, no CL_NextDemo */
 			cls.demonum = -1;
@@ -2272,6 +2278,19 @@ static void Host_Stopdemo_f (void)
 		return;
 	CL_StopPlayback ();
 	CL_Disconnect ();
+}
+
+/*
+==================
+Host_Resetdemos
+
+Clear looping demo list (called on game change)
+==================
+*/
+void Host_Resetdemos (void)
+{
+	memset (cls.demos, 0, sizeof (cls.demos));
+	cls.demonum = 0;
 }
 
 //=============================================================================
@@ -2326,7 +2345,5 @@ void Host_InitCommands (void)
 	Cmd_AddCommand ("viewframe", Host_Viewframe_f);
 	Cmd_AddCommand ("viewnext", Host_Viewnext_f);
 	Cmd_AddCommand ("viewprev", Host_Viewprev_f);
-
-	Cmd_AddCommand ("mcache", Mod_Print);
 }
 
