@@ -1134,9 +1134,11 @@ void SCR_UpdateScreen (void)
 		SCR_DrawConsole ();
 		M_Draw ();
 	}
+#endif
 
 	V_UpdateBlend (); //johnfitz -- V_UpdatePalette cleaned up and renamed
 
+#if 0
 	GLSLGamma_GammaCorrect ();
 
 	GL_EndRendering ();
