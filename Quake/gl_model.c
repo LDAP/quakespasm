@@ -570,16 +570,43 @@ static void Mod_LoadTextures (lump_t *l)
 				//now load whatever we found
 				if (data) //load external image
 				{
+					char filename2[MAX_OSPATH];
 					q_strlcpy (texturename, filename, sizeof(texturename));
 					tx->gltexture = TexMgr_LoadImage (loadmodel, texturename, fwidth, fheight,
 						SRC_RGBA, data, filename, 0, TEXPREF_NONE);
+
+					//now try to load glow/luma image from the same place
+					Hunk_FreeToLowMark (mark);
+					q_snprintf (filename2, sizeof(filename2), "%s_glow", filename);
+					data = Image_LoadImage (filename2, &fwidth, &fheight);
+					if (!data)
+					{
+						q_snprintf (filename2, sizeof(filename2), "%s_luma", filename);
+						data = Image_LoadImage (filename2, &fwidth, &fheight);
+					}
+
+					if (data)
+						tx->fullbright = TexMgr_LoadImage (loadmodel, filename2, fwidth, fheight,
+							SRC_RGBA, data, filename2, 0, TEXPREF_NONE);
 				}
 				else //use the texture from the bsp file
 				{
 					q_snprintf (texturename, sizeof(texturename), "%s:%s", loadmodel->name, tx->name);
 					offset = (src_offset_t)(mt+1) - (src_offset_t)mod_base;
-					tx->gltexture = TexMgr_LoadImage (loadmodel, texturename, tx->width, tx->height,
-						SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_NONE);
+					if (Mod_CheckFullbrights ((byte *)(tx+1), pixels))
+					{
+						tx->gltexture = TexMgr_LoadImage (loadmodel, texturename, tx->width, tx->height,
+							SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_NONE | TEXPREF_NOBRIGHT);
+						char		glow_texturename[64];
+						q_snprintf (glow_texturename, sizeof(glow_texturename), "%s:%s_glow", loadmodel->name, tx->name);
+						tx->fullbright = TexMgr_LoadImage (loadmodel, glow_texturename, tx->width, tx->height,
+							SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_NONE | TEXPREF_FULLBRIGHT);
+					}
+					else
+					{
+						tx->gltexture = TexMgr_LoadImage (loadmodel, texturename, tx->width, tx->height,
+							SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_NONE);
+					}
 				}
 
 				//now create the warpimage, using dummy data from the hunk to create the initial image
