@@ -92,6 +92,10 @@ typedef struct entity_s
 	vec3_t					currentorigin;	//johnfitz -- transform lerping
 	vec3_t					previousangles;	//johnfitz -- transform lerping
 	vec3_t					currentangles;	//johnfitz -- transform lerping
+
+	vec3_t 					mv_prev_origin; // LDAP for motion vectors
+	vec3_t 					mv_prev_angles; // LDAP for motion vectors
+	float 					mv_prev_blend;  // LDAP for motion vectors
 } entity_t;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
