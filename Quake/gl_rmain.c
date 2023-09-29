@@ -558,13 +558,14 @@ void R_SetupView (void)
 	VectorCopy (r_refdef.vieworg, r_origin);
 	AngleVectors (r_refdef.viewangles, vpn, vright, vup);
 
-  return; // [jo]
 // current viewleaf
 	r_oldviewleaf = r_viewleaf;
 	r_viewleaf = Mod_PointInLeaf (r_origin, cl.worldmodel);
 
 	V_SetContentsColor (r_viewleaf->contents);
 	V_CalcBlend ();
+
+#if 0
 
 	//johnfitz -- calculate r_fovx and r_fovy here
 	r_fovx = r_refdef.fov_x;
@@ -601,6 +602,7 @@ void R_SetupView (void)
 		else if (r_lightmap.value) r_lightmap_cheatsafe = true;
 	}
 	//johnfitz
+#endif
 }
 
 //==============================================================================
@@ -1072,7 +1074,6 @@ R_RenderView
 */
 void R_RenderView (void)
 {
-#if 0
 	double	time1, time2;
 
 	if (r_norefresh.value)
@@ -1081,6 +1082,7 @@ void R_RenderView (void)
 	if (!cl.worldmodel)
 		Sys_Error ("R_RenderView: NULL worldmodel");
 
+#if 0
 	time1 = 0; /* avoid compiler warning */
 	if (r_speeds.value)
 	{
@@ -1093,10 +1095,11 @@ void R_RenderView (void)
 	}
 	else if (gl_finish.value)
 		glFinish ();
-
+#endif
 	R_SetupView (); //johnfitz -- this does everything that should be done once per frame
 
 	//johnfitz -- stereo rendering -- full of hacky goodness
+#if 0
 	if (r_stereo.value)
 	{
 		float eyesep = CLAMP(-8.0f, r_stereo.value, 8.0f);
