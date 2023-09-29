@@ -370,6 +370,10 @@ Underwater, lava, etc each has a color shift
 */
 void V_SetContentsColor (int contents)
 {
+	// LDAP: doesn't fit the raytraced version
+	cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
+	return;
+
 	switch (contents)
 	{
 	case CONTENTS_EMPTY:
