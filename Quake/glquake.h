@@ -90,6 +90,7 @@ typedef struct particle_s
 {
 // driver-usable fields
 	vec3_t		org;
+	vec3_t  	mv_prev_origin; // LDAP for motion vectors, set from rendering engine
 	float		color;
 // drivers never touch the following fields
 	struct particle_s	*next;
