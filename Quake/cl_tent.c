@@ -347,10 +347,12 @@ void CL_UpdateTEnts (void)
 			if (!ent)
 				return;
 			VectorCopy (org, ent->origin);
+			VectorCopy (org, ent->mv_prev_origin);
 			ent->model = b->model;
 			ent->angles[0] = pitch;
 			ent->angles[1] = yaw;
 			ent->angles[2] = rand()%360;
+			VectorCopy(ent->angles, ent->mv_prev_angles);
 
 			//johnfitz -- use j instead of using i twice, so we don't corrupt memory
 			for (j=0 ; j<3 ; j++)
