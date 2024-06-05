@@ -1083,6 +1083,8 @@ void SCR_UpdateScreen (void)
 	if (vid.recalc_refdef)
 		SCR_CalcRefdef ();
 
+	SCR_Render();
+
 #if 0
 
 //
