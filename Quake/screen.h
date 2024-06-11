@@ -30,9 +30,6 @@ void SCR_LoadPics (void);
 
 void SCR_UpdateScreen (void);
 
-// @LDAP callback for rendering
-void SCR_Render(void);
-
 
 void SCR_SizeUp (void);
 void SCR_SizeDown (void);

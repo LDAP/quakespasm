@@ -14,5 +14,5 @@ void QS_texture_load(gltexture_t* glt, uint32_t* data)
 // process input, pretty much a copy from in_sdl.c:
 void IN_Move(usercmd_t* cmd)
 // called in place of the quakespasm renderer
-void SCR_Render()
+void R_RenderScene()
 ```

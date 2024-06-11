@@ -1083,10 +1083,6 @@ void SCR_UpdateScreen (void)
 	if (vid.recalc_refdef)
 		SCR_CalcRefdef ();
 
-	SCR_Render();
-
-#if 0
-
 //
 // do 3D refresh drawing, and then update the screen
 //
@@ -1136,7 +1132,6 @@ void SCR_UpdateScreen (void)
 		SCR_DrawConsole ();
 		M_Draw ();
 	}
-#endif
 
 	V_UpdateBlend (); //johnfitz -- V_UpdatePalette cleaned up and renamed
 
