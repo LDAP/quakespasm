@@ -1053,29 +1053,9 @@ void SCR_UpdateScreen (void)
 
 	if (!scr_initialized || !con_initialized)
 		return;				// not initialized yet
-	SCR_SetUpToDrawConsole ();
 
-	V_RenderView ();
 
-	vid.numpages = (gl_triplebuffer.value) ? 3 : 2;
-
-	if (scr_disabled_for_loading)
-	{
-		if (realtime - scr_disabled_time > 60)
-		{
-			scr_disabled_for_loading = false;
-			Con_Printf ("load failed.\n");
-		}
-		else
-			return;
-	}
-
-	if (!scr_initialized || !con_initialized)
-		return;				// not initialized yet
-
-#if 0
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
-#endif
 
 	//
 	// determine size of refresh window
@@ -1135,10 +1115,10 @@ void SCR_UpdateScreen (void)
 
 	V_UpdateBlend (); //johnfitz -- V_UpdatePalette cleaned up and renamed
 
-#if 0
+	#if 0
 	GLSLGamma_GammaCorrect ();
+	#endif
 
 	GL_EndRendering ();
-#endif
 }
 
