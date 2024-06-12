@@ -921,6 +921,7 @@ void R_DrawShadows (void)
 R_RenderScene
 ================
 */
+#if 0 // @LDAP: Define in own renderer
 void R_RenderScene (void)
 {
 	R_SetupScene (); //johnfitz -- this does everything that should be done once per call to RenderScene
@@ -953,6 +954,7 @@ void R_RenderScene (void)
 
 	R_ShowBoundingBoxes (); //johnfitz
 }
+#endif
 
 #if 0
 static GLuint r_scaleview_texture;
@@ -1131,7 +1133,9 @@ void R_RenderView (void)
 	}
 	else
 	{
+		#endif
 		R_RenderScene ();
+		#if 0
 	}
 	//johnfitz
 
