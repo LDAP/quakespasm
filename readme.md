@@ -16,3 +16,15 @@ void IN_Move(usercmd_t* cmd)
 // called in place of the quakespasm renderer
 void R_RenderScene()
 ```
+
+If the meson option `snd_extern` is false you also have to implement:
+```c++
+qboolean SNDDMA_Init (dma_t *dma);
+int SNDDMA_GetDMAPos (void);
+void SNDDMA_Shutdown (void);
+void SNDDMA_LockBuffer (void);
+void SNDDMA_Submit (void);
+void SNDDMA_BlockSound (void);
+void SNDDMA_UnblockSound (void);
+```
+Note, that this is not necessary to have sound if you hook into quakes internals, but it makes things easier.

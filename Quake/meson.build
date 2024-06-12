@@ -21,9 +21,13 @@ else
 endif
 
 if is_windows
-    SYSOBJ_SYS = files('pl_null.c', 'vid.c', 'in_null.c', 'cd_null.c', 'snd_null.c', 'sys_sdl_win.c')
+    SYSOBJ_SYS = files('pl_null.c', 'vid.c', 'in_null.c', 'cd_null.c', 'sys_sdl_win.c')
 else
-    SYSOBJ_SYS = files('pl_null.c', 'vid.c', 'sys_sdl_unix.c', 'cd_null.c', 'in_null.c', 'snd_null.c')
+    SYSOBJ_SYS = files('pl_null.c', 'vid.c', 'sys_sdl_unix.c', 'cd_null.c', 'in_null.c')
+endif
+
+if not get_option('snd_extern')
+    SYSOBJ_SYS += files('snd_null.c')
 endif
 
 GLOBJS = files(
