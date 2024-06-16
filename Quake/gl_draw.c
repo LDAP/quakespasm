@@ -423,6 +423,7 @@ void Draw_Init (void)
 //
 //==============================================================================
 
+#ifndef DRAW_EXTERN
 /*
 ================
 Draw_CharacterQuad -- johnfitz -- seperate function to spit out verts
@@ -451,6 +452,9 @@ void Draw_CharacterQuad (int x, int y, char num)
 	glVertex2f (x, y+8);
 #endif
 }
+#else
+void Draw_CharacterQuad (int x, int y, char num);
+#endif
 
 /*
 ================
@@ -459,7 +463,6 @@ Draw_Character -- johnfitz -- modified to call Draw_CharacterQuad
 */
 void Draw_Character (int x, int y, int num)
 {
-#if 0
 	if (y <= -8)
 		return;			// totally off screen
 
@@ -468,11 +471,14 @@ void Draw_Character (int x, int y, int num)
 	if (num == 32)
 		return; //don't waste verts on spaces
 
+#if 0
 	GL_Bind (char_texture);
 	glBegin (GL_QUADS);
+#endif
 
 	Draw_CharacterQuad (x, y, (char) num);
 
+#if 0
 	glEnd ();
 #endif
 }
@@ -484,12 +490,13 @@ Draw_String -- johnfitz -- modified to call Draw_CharacterQuad
 */
 void Draw_String (int x, int y, const char *str)
 {
-#if 0
 	if (y <= -8)
 		return;			// totally off screen
 
+#if 0
 	GL_Bind (char_texture);
 	glBegin (GL_QUADS);
+#endif
 
 	while (*str)
 	{
@@ -499,8 +506,10 @@ void Draw_String (int x, int y, const char *str)
 		x += 8;
 	}
 
+#if 0
 	glEnd ();
 #endif
+
 }
 
 /*
@@ -693,6 +702,7 @@ void Draw_FadeScreen (void)
 GL_SetCanvas -- johnfitz -- support various canvas types
 ================
 */
+#ifndef DRAW_EXTERN
 void GL_SetCanvas (canvastype newcanvas)
 {
 #if 0
@@ -771,6 +781,9 @@ void GL_SetCanvas (canvastype newcanvas)
 	glLoadIdentity ();
 #endif
 }
+#else
+void GL_SetCanvas (canvastype newcanvas);
+#endif
 
 /*
 ================

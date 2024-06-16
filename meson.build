@@ -87,6 +87,11 @@ if is_windows
                                     'Windows\misc\include')
 endif
 
+
+if get_option('draw_extern')
+    add_project_arguments('-DDRAW_EXTERN', language: 'c')
+endif
+
 subdir('Quake')
 
 quake_dep = declare_dependency(

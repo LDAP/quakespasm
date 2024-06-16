@@ -28,3 +28,8 @@ void SNDDMA_BlockSound (void);
 void SNDDMA_UnblockSound (void);
 ```
 Note, that this is not necessary to have sound if you hook into quakes internals, but it makes things easier.
+
+If the meson option `draw_character_extern` is false you also have to implement:
+```c++
+void Draw_CharacterQuad (int x, int y, char num);
+```

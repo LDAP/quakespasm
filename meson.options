@@ -50,3 +50,8 @@ option(
     type: 'boolean',
     value: false,
 )
+option(
+    'draw_extern',
+    type: 'boolean',
+    value: false,
+)
