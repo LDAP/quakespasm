@@ -77,8 +77,8 @@ void VID_Init (void)
 	// Cmd_AddCommand ("vid_describecurrentmode", VID_DescribeCurrentMode_f);
 	// Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
 
-  vid.width  = 1024;
-  vid.height = 576;
+  vid.width  = 1920;
+  vid.height = 1080;
 	Cvar_SetValueQuick (&vid_bpp, (float)8);
 
 	if (CFG_OpenConfig("config.cfg") == 0)
