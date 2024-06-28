@@ -43,7 +43,9 @@ void VID_Changed_f (cvar_t *var);
 static void _VID_Changed_f (cvar_t *var) {
 	vid.width  = (int)vid_width.value;
   	vid.height = (int)vid_height.value;
-  	vid.conwidth = vid.width & 0xFFFFFFF8;
+  	vid.conwidth = (scr_conwidth.value > 0) ? (int)scr_conwidth.value : (scr_conscale.value > 0) ? (int)(vid.width/scr_conscale.value) : vid.width;
+	vid.conwidth = CLAMP (320, vid.conwidth, vid.width);
+	vid.conwidth &= 0xFFFFFFF8;
 	vid.conheight = vid.conwidth * vid.height / vid.width;
 	vid.recalc_refdef = 1;
 
@@ -124,7 +126,8 @@ void VID_Init (void)
 			vid.width = vid.height * 4 / 3;
 	}
 
-	_VID_Changed_f(NULL);
+	Cvar_SetValueQuick (&vid_width, (int)vid.width);
+	Cvar_SetValueQuick (&vid_height, (int)vid.height);
 }
 void VID_Shutdown (void) {}
 void VID_Update (vrect_t *rects) {}
