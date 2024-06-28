@@ -15,4 +15,6 @@ void QS_texture_load(gltexture_t* glt, uint32_t* data)
 void IN_Move(usercmd_t* cmd)
 // called in place of the quakespasm renderer
 void R_RenderScene()
+// called when the vid struct changed (render resolution,...)
+void VID_Changed_f (cvar_t *var);
 ```

@@ -26,8 +26,8 @@ int GL_GenerateMipmap = 0;
 
 //johnfitz -- new cvars
 static cvar_t	vid_fullscreen = {"vid_fullscreen", "0", CVAR_ARCHIVE};	// QuakeSpasm, was "1"
-static cvar_t	vid_width = {"vid_width", "800", CVAR_ARCHIVE};		// QuakeSpasm, was 640
-static cvar_t	vid_height = {"vid_height", "600", CVAR_ARCHIVE};	// QuakeSpasm, was 480
+static cvar_t	vid_width = {"vid_width", "1920", CVAR_ARCHIVE};		// QuakeSpasm, was 640
+static cvar_t	vid_height = {"vid_height", "1080", CVAR_ARCHIVE};	// QuakeSpasm, was 480
 static cvar_t	vid_bpp = {"vid_bpp", "16", CVAR_ARCHIVE};
 static cvar_t	vid_refreshrate = {"vid_refreshrate", "60", CVAR_ARCHIVE};
 static cvar_t	vid_vsync = {"vid_vsync", "0", CVAR_ARCHIVE};
@@ -37,6 +37,19 @@ static cvar_t	vid_borderless = {"vid_borderless", "0", CVAR_ARCHIVE}; // QuakeSp
 //johnfitz
 cvar_t		vid_gamma = {"gamma", "1", CVAR_ARCHIVE}; //johnfitz -- moved here from view.c
 cvar_t		vid_contrast = {"contrast", "1", CVAR_ARCHIVE}; //QuakeSpasm, MarkV
+
+void VID_Changed_f (cvar_t *var);
+
+static void _VID_Changed_f (cvar_t *var) {
+	vid.width  = (int)vid_width.value;
+  	vid.height = (int)vid_height.value;
+  	vid.conwidth = vid.width & 0xFFFFFFF8;
+	vid.conheight = vid.conwidth * vid.height / vid.width;
+	vid.recalc_refdef = 1;
+
+	if (var)
+  		VID_Changed_f(var);
+}
 
 void VID_Init (void)
 {
@@ -61,15 +74,15 @@ void VID_Init (void)
 	Cvar_RegisterVariable (&vid_fsaa); //QuakeSpasm
 	Cvar_RegisterVariable (&vid_desktopfullscreen); //QuakeSpasm
 	Cvar_RegisterVariable (&vid_borderless); //QuakeSpasm
-	// Cvar_SetCallback (&vid_fullscreen, VID_Changed_f);
-	// Cvar_SetCallback (&vid_width, VID_Changed_f);
-	// Cvar_SetCallback (&vid_height, VID_Changed_f);
-	// Cvar_SetCallback (&vid_refreshrate, VID_Changed_f);
-	// Cvar_SetCallback (&vid_bpp, VID_Changed_f);
-	// Cvar_SetCallback (&vid_vsync, VID_Changed_f);
-	// Cvar_SetCallback (&vid_fsaa, VID_FSAA_f);
-	// Cvar_SetCallback (&vid_desktopfullscreen, VID_Changed_f);
-	// Cvar_SetCallback (&vid_borderless, VID_Changed_f);
+	Cvar_SetCallback (&vid_fullscreen, _VID_Changed_f);
+	Cvar_SetCallback (&vid_width, _VID_Changed_f);
+	Cvar_SetCallback (&vid_height, _VID_Changed_f);
+	Cvar_SetCallback (&vid_refreshrate, _VID_Changed_f);
+	Cvar_SetCallback (&vid_bpp, _VID_Changed_f);
+	Cvar_SetCallback (&vid_vsync, _VID_Changed_f);
+	//Cvar_SetCallback (&vid_fsaa, VID_FSAA_f);
+	Cvar_SetCallback (&vid_desktopfullscreen, _VID_Changed_f);
+	Cvar_SetCallback (&vid_borderless, _VID_Changed_f);
 	
 	// Cmd_AddCommand ("vid_unlock", VID_Unlock); //johnfitz
 	// Cmd_AddCommand ("vid_restart", VID_Restart); //johnfitz
@@ -77,8 +90,6 @@ void VID_Init (void)
 	// Cmd_AddCommand ("vid_describecurrentmode", VID_DescribeCurrentMode_f);
 	// Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
 
-  vid.width  = 1920;
-  vid.height = 1080;
 	Cvar_SetValueQuick (&vid_bpp, (float)8);
 
 	if (CFG_OpenConfig("config.cfg") == 0)
@@ -88,14 +99,32 @@ void VID_Init (void)
 	}
 	CFG_ReadCvarOverrides(read_vars, num_readvars);
 
+	vid.numpages = 2;
 	vid.maxwarpwidth  = 320;
 	vid.maxwarpheight = 200;
 	vid.colormap = host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
-  // ??
-	// vid_menucmdfn = VID_Menu_f; //johnfitz
-	// vid_menudrawfn = VID_MenuDraw;
-	// vid_menukeyfn = VID_MenuKey;
+  	
+  	int p;
+  	p = COM_CheckParm("-width");
+	if (p && p < com_argc-1)
+	{
+		vid.width = Q_atoi(com_argv[p+1]);
+
+		if(!COM_CheckParm("-height"))
+			vid.height = vid.width * 3 / 4;
+	}
+
+	p = COM_CheckParm("-height");
+	if (p && p < com_argc-1)
+	{
+		vid.height = Q_atoi(com_argv[p+1]);
+
+		if(!COM_CheckParm("-width"))
+			vid.width = vid.height * 4 / 3;
+	}
+
+	_VID_Changed_f(NULL);
 }
 void VID_Shutdown (void) {}
 void VID_Update (vrect_t *rects) {}
