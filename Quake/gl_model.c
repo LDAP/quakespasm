@@ -1192,38 +1192,28 @@ TODO: merge this into BuildSurfaceDisplayList?
 */
 static void Mod_PolyForUnlitSurface (msurface_t *fa)
 {
-	vec3_t		verts[64];
-	int			numverts, i, lindex;
+	const int	numverts = fa->numedges;
+	int		i, lindex;
 	float		*vec;
 	glpoly_t	*poly;
 	float		texscale;
 
 	if (fa->flags & (SURF_DRAWTURB | SURF_DRAWSKY))
-		texscale = (1.0/128.0); //warp animation repeats every 128
+		texscale = (1.0f/128.0f); //warp animation repeats every 128
 	else
-		texscale = (1.0/32.0); //to match r_notexture_mip
+		texscale = (1.0f/32.0f); //to match r_notexture_mip
 
-	// convert edges back to a normal polygon
-	numverts = 0;
-	for (i=0 ; i<fa->numedges ; i++)
-	{
-		lindex = loadmodel->surfedges[fa->firstedge + i];
-
-		if (lindex > 0)
-			vec = loadmodel->vertexes[loadmodel->edges[lindex].v[0]].position;
-		else
-			vec = loadmodel->vertexes[loadmodel->edges[-lindex].v[1]].position;
-		VectorCopy (vec, verts[numverts]);
-		numverts++;
-	}
-
-	//create the poly
 	poly = (glpoly_t *) Hunk_Alloc (sizeof(glpoly_t) + (numverts-4) * VERTEXSIZE*sizeof(float));
 	poly->next = NULL;
 	fa->polys = poly;
 	poly->numverts = numverts;
-	for (i=0, vec=(float *)verts; i<numverts; i++, vec+= 3)
+	for (i=0; i<numverts; i++)
 	{
+		lindex = loadmodel->surfedges[fa->firstedge + i];
+		vec = (lindex > 0) ?
+			loadmodel->vertexes[loadmodel->edges[lindex].v[0]].position :
+			loadmodel->vertexes[loadmodel->edges[-lindex].v[1]].position;
+
 		VectorCopy (vec, poly->verts[i]);
 		poly->verts[i][3] = DotProduct(vec, fa->texinfo->vecs[0]) * texscale;
 		poly->verts[i][4] = DotProduct(vec, fa->texinfo->vecs[1]) * texscale;
@@ -1334,6 +1324,8 @@ static void Mod_LoadFaces (lump_t *l, qboolean bsp2)
 		}
 
 		out->flags = 0;
+		if (out->numedges < 3)
+			Con_Warning("surfnum %d: bad numedges %d\n", surfnum, out->numedges);
 
 		if (side)
 			out->flags |= SURF_PLANEBACK;
@@ -2409,7 +2401,7 @@ static void *Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame)
 
 	pdaliasframe = (daliasframe_t *)pin;
 
-	strcpy (frame->name, pdaliasframe->name);
+	q_strlcpy (frame->name, pdaliasframe->name, sizeof (frame->name));
 	frame->firstpose = posenum;
 	frame->numposes = 1;
 
@@ -3041,7 +3033,7 @@ static void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int fram
 Mod_LoadSpriteGroup
 =================
 */
-static void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum)
+static void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum, spriteframetype_t type)
 {
 	dspritegroup_t		*pingroup;
 	mspritegroup_t		*pspritegroup;
@@ -3053,6 +3045,8 @@ static void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int fram
 	pingroup = (dspritegroup_t *)pin;
 
 	numframes = LittleLong (pingroup->numframes);
+	if (type == SPR_ANGLED && numframes != 8)
+		Sys_Error ("Mod_LoadSpriteGroup: Bad # of frames: %d", numframes);
 
 	pspritegroup = (mspritegroup_t *) Hunk_AllocName (sizeof (mspritegroup_t) +
 				(numframes - 1) * sizeof (pspritegroup->frames[0]), loadname);
@@ -3156,7 +3150,7 @@ static void Mod_LoadSpriteModel (qmodel_t *mod, void *buffer)
 		else
 		{
 			pframetype = (dspriteframetype_t *)
-					Mod_LoadSpriteGroup (pframetype + 1, &psprite->frames[i].frameptr, i);
+					Mod_LoadSpriteGroup (pframetype + 1, &psprite->frames[i].frameptr, i, frametype);
 		}
 	}
 

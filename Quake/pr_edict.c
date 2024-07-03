@@ -55,7 +55,7 @@ int		type_size[8] = {
 	1	// sizeof(void *) / 4		// ev_pointer
 };
 
-#define	NUM_TYPE_SIZES	(int)(sizeof(type_size) / sizeof(type_size[0]))
+#define NUM_TYPE_SIZES (int)Q_COUNTOF(type_size)
 
 static ddef_t	*ED_FieldAtOfs (int ofs);
 static qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s);
@@ -416,6 +416,7 @@ padded to 20 field width
 const char *PR_GlobalString (int ofs)
 {
 	static char	line[512];
+	static const int lastchari = Q_COUNTOF(line) - 2;
 	const char	*s;
 	int		i;
 	ddef_t		*def;
@@ -434,7 +435,11 @@ const char *PR_GlobalString (int ofs)
 	i = strlen(line);
 	for ( ; i < 20; i++)
 		strcat (line, " ");
-	strcat (line, " ");
+
+	if (i < lastchari)
+		strcat (line, " ");
+	else
+		line[lastchari] = ' ';
 
 	return line;
 }
@@ -442,6 +447,7 @@ const char *PR_GlobalString (int ofs)
 const char *PR_GlobalStringNoContents (int ofs)
 {
 	static char	line[512];
+	static const int lastchari = Q_COUNTOF(line) - 2;
 	int		i;
 	ddef_t		*def;
 
@@ -454,7 +460,11 @@ const char *PR_GlobalStringNoContents (int ofs)
 	i = strlen(line);
 	for ( ; i < 20; i++)
 		strcat (line, " ");
-	strcat (line, " ");
+
+	if (i < lastchari)
+		strcat (line, " ");
+	else
+		line[lastchari] = ' ';
 
 	return line;
 }
@@ -919,7 +929,10 @@ const char *ED_ParseEdict (const char *data, edict_t *ent)
 		}
 
 		// parse value
-		data = COM_Parse (data);
+		// HACK: we allow truncation when reading the wad field,
+		// otherwise maps using lots of wads with absolute paths
+		// could cause a parse error
+		data = COM_ParseEx (data, !strcmp (keyname, "wad") ? CPE_ALLOWTRUNC : CPE_NOTRUNC);
 		if (!data)
 			Host_Error ("ED_ParseEntity: EOF without closing brace");
 

@@ -831,8 +831,7 @@ static const arg_completion_type_t arg_completion_types[] =
 	{ "timedemo ", &demolist }
 };
 
-static const int num_arg_completion_types =
-	sizeof(arg_completion_types)/sizeof(arg_completion_types[0]);
+static const int num_arg_completion_types = Q_COUNTOF(arg_completion_types);
 
 /*
 ============
@@ -841,7 +840,7 @@ FindCompletion -- stevenaaus
 */
 const char *FindCompletion (const char *partial, filelist_item_t *filelist, int *nummatches_out)
 {
-	static char matched[32];
+	static char matched[40];
 	char *i_matched, *i_name;
 	filelist_item_t	*file;
 	int   init, match, plen;

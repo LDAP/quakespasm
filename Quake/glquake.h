@@ -135,6 +135,7 @@ extern	cvar_t	r_pos;
 extern	cvar_t	r_waterwarp;
 extern	cvar_t	r_fullbright;
 extern	cvar_t	r_lightmap;
+extern	cvar_t	r_lightmapwide;
 extern	cvar_t	r_shadows;
 extern	cvar_t	r_wateralpha;
 extern	cvar_t	r_lavaalpha;
@@ -152,6 +153,7 @@ extern	cvar_t	gl_affinemodels;
 extern	cvar_t	gl_polyblend;
 extern	cvar_t	gl_flashblend;
 extern	cvar_t	gl_nocolors;
+extern	cvar_t	gl_finish;
 
 extern	cvar_t	gl_playermip;
 
@@ -342,6 +344,9 @@ typedef struct glsl_attrib_binding_s {
 
 extern float	map_wateralpha, map_lavaalpha, map_telealpha, map_slimealpha; //ericw
 
+#define NUMVERTEXNORMALS	162
+extern const float	r_avertexnormals[NUMVERTEXNORMALS][3];
+
 extern char	skybox_name[1024];
 extern gltexture_t	*skybox_textures[6];
 extern gltexture_t	*solidskytexture, *alphaskytexture;
@@ -438,7 +443,7 @@ void R_DrawTextureChains (qmodel_t *model, entity_t *ent, texchain_t chain);
 void R_DrawWorld_Water (void);
 
 // void GL_BindBuffer (GLenum target, GLuint buffer);
-// void GL_ClearBufferBindings ();
+// void GL_ClearBufferBindings (void);
 
 // void GLSLGamma_DeleteTexture (void);
 // void GLSLGamma_GammaCorrect (void);

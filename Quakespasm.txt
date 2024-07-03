@@ -3,7 +3,7 @@
   ______________________________________________________________________
 
 
-  Page last edited: August 2023.
+  Page last edited: June 2024.
 
 
   1. About
@@ -221,6 +221,51 @@
 
   5. Changes
 
+  Changes in 0.96.2:
+
+  -  Fix stack buffer overrun Mod_PolyForUnlitSurface: fixes crash when
+     loading lim_daviddg.bsp from Liminal Spaces Jam.
+
+  -  Fix potential buffer overflow in progs global string functions.
+
+  -  Fix potential buffer overflow in Mod_LoadAliasFrame()
+
+  -  Optimize BoxOnPlaneSide()
+
+  -  Reserve enough space in PF_makestatic() for worst case scenarios.
+
+  -  Improve handling of huge entities in SV_FindTouchedLeafs()
+
+  -  Warn about bad maps with only 1 or 2 edges per face (e.g.: mj4m?,
+     alk_dancing, ej3_bizz, rotj_entsoy...)
+
+  -  Apply FOV gun scaling for r_showtris
+
+  -  Sliders with visible values in options menu.
+
+  -  game command now refuses setting a non-existing game directory
+
+  -  Fix build in C23 mode.
+
+  -  Minor code cleanups. Updated third party code, e.g. SDL, music
+     codecs, etc.
+
+  -  Thanks to Andrei Drexler, Alexey Lysiuk, Diordany van Hemert, and
+     Jaime Moreira for patches.
+
+
+  Changes in 0.96.1:
+
+  -  Fix demo recording as client-only after connection to server (was
+     broken by signon changes in 0.96.0. Thanks to Jozsef Szalontai for
+     issue report.)
+
+  -  Fix potential buffer overflow in COM_Parse(), e.g. with maps with
+     oversized 'wad' fields. (Thanks to Andrei Drexler.)
+
+  -  Minor code cleanups.
+
+
   Changes in 0.96.0:
 
   -  Adjustments to joystick defaults and behaviour.  See the
@@ -229,6 +274,9 @@
   -  Fix for a mouse grabbing issue on macOS.
 
   -  Add missing support for -ip command line option on unix / macOS.
+
+  -  Backport angled sprites code from FTEQW (spriteframetype: 2, must
+     have 8 frames per group.)
 
   -  Bump the progs execution runaway loop limit to 16M.
 
@@ -239,13 +287,17 @@
 
   -  Bump the MAXALIASFRAMES limit to 1024.
 
+  -  Fix arrays to have proper sizes in gl mesh code, reflecting
+     MAXALIASTRIS and MAXALIASVERTS correctly. (fixes SIGSEGV in
+     mj4m4/mj4m5.)
+
   -  Increased default value of gl_farclip to 65536.
 
   -  Increase chase cam target trace distance to allow for chasecam to
      function in large open maps (useful e.g. for the func_vehicle mod.)
 
-  -  Raised default maximum number of particles to 16384. Using the
-     -particles cmdline option it can be set up to 32768.
+  -  Raised default maximum number of particles to 16384 (can be set
+     up to 32768 with -particles on the command line.)
 
   -  Fix on-screen keyboard showing up suddenly on Steam Deck when
      starting a map.
@@ -254,7 +306,7 @@
 
   -  Fix a memory leak when exiting game in SDL2 builds.
 
-  -  Fix possible crash when handling clipboard data on macOS.
+  -  Fix a possible crash when handling clipboard data on macOS.
 
   -  Fix a potential crash after loading of saved game.
 
@@ -262,7 +314,9 @@
 
   -  Fix Dutch angle VP_PARALLEL_UPRIGHT sprites.
 
-  -  Fix an issue with blending of lights.
+  -  Fix an issue with lights blending by using 10 bit color depth for
+     lightmaps. (For GLSL mode only.) Disable with "-nopackedpixels",
+     if necessary.
 
   -  No relative motions when the window is not focused.
 
@@ -285,8 +339,8 @@
      codecs, etc.
 
   -  Thanks to Andrei Drexler, Alexey Lysiuk, Andrey Budko, Boris I.
-     Bendovsky, Chris Cowan, Maciej Olędzki, Simon McVittie, erysdren,
-     OscarL and Shpoike for their patches.
+     Bendovsky, Chris Cowan, Maciej Olędzki, Simon McVittie, OscarL,
+     Eric Wasylishen, Jaycie Ewald and Spike for patches.
 
 
   Changes in 0.95.1:

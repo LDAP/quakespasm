@@ -1210,28 +1210,28 @@ static void GL_CheckExtensions (void)
 		GL_Uniform4fFunc = (QS_PFNGLUNIFORM4FPROC) SDL_GL_GetProcAddress("glUniform4f");
 
 		if (GL_CreateShaderFunc &&
-			GL_DeleteShaderFunc &&
-			GL_DeleteProgramFunc &&
-			GL_ShaderSourceFunc &&
-			GL_CompileShaderFunc &&
-			GL_GetShaderivFunc &&
-			GL_GetShaderInfoLogFunc &&
-			GL_GetProgramivFunc &&
-			GL_GetProgramInfoLogFunc &&
-			GL_CreateProgramFunc &&
-			GL_AttachShaderFunc &&
-			GL_LinkProgramFunc &&
-			GL_BindAttribLocationFunc &&
-			GL_UseProgramFunc &&
-			GL_GetAttribLocationFunc &&
-			GL_VertexAttribPointerFunc &&
-			GL_EnableVertexAttribArrayFunc &&
-			GL_DisableVertexAttribArrayFunc &&
-			GL_GetUniformLocationFunc &&
-			GL_Uniform1iFunc &&
-			GL_Uniform1fFunc &&
-			GL_Uniform3fFunc &&
-			GL_Uniform4fFunc)
+		    GL_DeleteShaderFunc &&
+		    GL_DeleteProgramFunc &&
+		    GL_ShaderSourceFunc &&
+		    GL_CompileShaderFunc &&
+		    GL_GetShaderivFunc &&
+		    GL_GetShaderInfoLogFunc &&
+		    GL_GetProgramivFunc &&
+		    GL_GetProgramInfoLogFunc &&
+		    GL_CreateProgramFunc &&
+		    GL_AttachShaderFunc &&
+		    GL_LinkProgramFunc &&
+		    GL_BindAttribLocationFunc &&
+		    GL_UseProgramFunc &&
+		    GL_GetAttribLocationFunc &&
+		    GL_VertexAttribPointerFunc &&
+		    GL_EnableVertexAttribArrayFunc &&
+		    GL_DisableVertexAttribArrayFunc &&
+		    GL_GetUniformLocationFunc &&
+		    GL_Uniform1iFunc &&
+		    GL_Uniform1fFunc &&
+		    GL_Uniform3fFunc &&
+		    GL_Uniform4fFunc)
 		{
 			Con_Printf("FOUND: GLSL\n");
 			gl_glsl_able = true;
@@ -1245,7 +1245,6 @@ static void GL_CheckExtensions (void)
 	{
 		Con_Warning ("OpenGL version < 2, GLSL not available\n");
 	}
-	
 	// GLSL gamma
 	//
 	if (COM_CheckParm("-noglslgamma"))
@@ -1259,44 +1258,45 @@ static void GL_CheckExtensions (void)
 	{
 		Con_Warning ("GLSL gamma not available, using hardware gamma\n");
 	}
-    
-    // GLSL alias model rendering
-    //
+	// GLSL alias model rendering
+	//
 	if (COM_CheckParm("-noglslalias"))
 		Con_Warning ("GLSL alias model rendering disabled at command line\n");
 	else if (gl_glsl_able && gl_vbo_able && gl_max_texture_units >= 3)
 	{
 		gl_glsl_alias_able = true;
-		gl_packed_pixels = true;
 		Con_Printf("Enabled: GLSL alias model rendering\n");
-		Con_Printf("Enabled: EXT_packed_pixels\n");
 	}
 	else
 	{
 		Con_Warning ("GLSL alias model rendering not available, using Fitz renderer\n");
 	}
 
-#if 0 /* Disabling for non-GLSL path, needs more surgery. See: https://github.com/sezero/quakespasm/issues/47#issuecomment-1681540278 */
 	// packed_pixels
 	//
-	if (!gl_packed_pixels)
+	if (COM_CheckParm("-nopackedpixels"))
+		Con_Warning ("EXT_packed_pixels disabled at command line\n");
+	else if (gl_glsl_alias_able)
 	{
-		if (GL_ParseExtensionList(gl_extensions, "GL_APPLE_packed_pixels"))
-		{
-			Con_Printf("FOUND: APPLE_packed_pixels\n");
-			gl_packed_pixels = true;
-		}
-		else if (GL_ParseExtensionList(gl_extensions, "GL_EXT_packed_pixels"))
-		{
-			Con_Printf("FOUND: EXT_packed_pixels\n");
-			gl_packed_pixels = true;
-		}
-		else
-		{
-			Con_Warning ("packed_pixels not supported\n");
-		}
+		gl_packed_pixels = true;
+		Con_Printf("Enabled: EXT_packed_pixels\n");
 	}
-#endif
+	#if 0 /* Disabling for non-GLSL path, needs more surgery. */
+	else if (GL_ParseExtensionList(gl_extensions, "GL_APPLE_packed_pixels"))
+	{
+		Con_Printf("FOUND: APPLE_packed_pixels\n");
+		gl_packed_pixels = true;
+	}
+	else if (GL_ParseExtensionList(gl_extensions, "GL_EXT_packed_pixels"))
+	{
+		Con_Printf("FOUND: EXT_packed_pixels\n");
+		gl_packed_pixels = true;
+	}
+	else
+	{
+		Con_Warning ("packed_pixels not supported\n");
+	}
+	#endif
 
 	// glGenerateMipmap for warp textures
 	if (COM_CheckParm("-nowarpmipmaps"))
@@ -1572,7 +1572,7 @@ static void VID_InitModelist (void)
 
 	// enumerate fullscreen modes
 	flags = DEFAULT_SDL_FLAGS | SDL_FULLSCREEN;
-	for (i = 0; i < (int)(sizeof(bpps)/sizeof(bpps[0])); i++)
+	for (i = 0; i < (int)Q_COUNTOF(bpps); i++)
 	{
 		if (nummodes >= MAX_MODE_LIST)
 			break;
@@ -1636,7 +1636,7 @@ void	VID_Init (void)
 					 "vid_fsaa",
 					 "vid_desktopfullscreen",
 					 "vid_borderless"};
-#define num_readvars	( sizeof(read_vars)/sizeof(read_vars[0]) )
+#define num_readvars	Q_COUNTOF(read_vars)
 
 	Cvar_RegisterVariable (&vid_fullscreen); //johnfitz
 	Cvar_RegisterVariable (&vid_width); //johnfitz
@@ -2390,4 +2390,3 @@ static void VID_Menu_f (void)
 	VID_Menu_RebuildBppList ();
 	VID_Menu_RebuildRateList ();
 }
-
