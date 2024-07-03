@@ -25,8 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include <stdint.h>
 
-const int	gl_solid_format = 3;
-const int	gl_alpha_format = 4;
+static const int	gl_solid_format = 3;
+static const int	gl_alpha_format = 4;
 
 // static cvar_t	gl_texturemode = {"gl_texturemode", "", CVAR_ARCHIVE};
 // static cvar_t	gl_texture_anisotropy = {"gl_texture_anisotropy", "1", CVAR_ARCHIVE};
@@ -45,8 +45,6 @@ unsigned int d_8to24table_fbright_fence[256];
 unsigned int d_8to24table_nobright[256];
 unsigned int d_8to24table_nobright_fence[256];
 unsigned int d_8to24table_conchars[256];
-unsigned int d_8to24table_shirt[256];
-unsigned int d_8to24table_pants[256];
 
 /*
 ================================================================================
@@ -71,7 +69,7 @@ static glmode_t glmodes[] = {
 	{GL_LINEAR,  GL_LINEAR_MIPMAP_NEAREST,	"GL_LINEAR_MIPMAP_NEAREST"},
 	{GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,	"GL_LINEAR_MIPMAP_LINEAR"},
 };
-#define NUM_GLMODES (int)(sizeof(glmodes)/sizeof(glmodes[0]))
+#define NUM_GLMODES (int)Q_COUNTOF(glmodes)
 static int glmode_idx = NUM_GLMODES - 1; /* trilinear */
 
 /*
@@ -82,10 +80,8 @@ TexMgr_DescribeTextureModes_f -- report available texturemodes
 static void TexMgr_DescribeTextureModes_f (void)
 {
 	int i;
-
 	for (i = 0; i < NUM_GLMODES; i++)
 		Con_SafePrintf ("   %2i: %s\n", i + 1, glmodes[i].name);
-
 	Con_Printf ("%i modes\n", i);
 }
 
@@ -1069,7 +1065,7 @@ static void TexMgr_LoadImage32 (gltexture_t *glt, unsigned *data)
 		mipwidth = glt->width;
 		mipheight = glt->height;
 
-		for (miplevel=1; mipwidth > 1 || mipheight > 1; miplevel++)
+		for (miplevel = 1; mipwidth > 1 || mipheight > 1; miplevel++)
 		{
 			if (mipwidth > 1)
 			{
@@ -1195,11 +1191,14 @@ TexMgr_LoadLightmap -- handles lightmap data
 static void TexMgr_LoadLightmap (gltexture_t *glt, byte *data)
 {
 #if 0
-	const GLint internalfmt = gl_packed_pixels ? GL_RGB10_A2 : lightmap_bytes;
-	const GLenum type = gl_packed_pixels ? GL_UNSIGNED_INT_10_10_10_2 : GL_UNSIGNED_BYTE;
+	const qboolean wide10bits = !!r_lightmapwide.value;
+	const GLenum type = wide10bits ? GL_UNSIGNED_INT_10_10_10_2 : GL_UNSIGNED_BYTE;
+	const GLint internalfmt = wide10bits ? GL_RGB10_A2 : lightmap_bytes;
+
 	// upload it
 	GL_Bind (glt);
 	glTexImage2D (GL_TEXTURE_2D, 0, internalfmt, glt->width, glt->height, 0, gl_lightmap_format, type, data);
+
 	// set filter modes
 	TexMgr_SetFilterModes (glt);
 #endif

@@ -1624,7 +1624,7 @@ static void PF_makestatic (void)
 		}
 	}
 
-	SV_ReserveSignonSpace (33);
+	SV_ReserveSignonSpace (34);
 
 	if (bits)
 	{
@@ -1855,4 +1855,4 @@ static builtin_t pr_builtin[] =
 };
 
 const builtin_t *pr_builtins = pr_builtin;
-const int pr_numbuiltins = sizeof(pr_builtin) / sizeof(pr_builtin[0]);
+const int pr_numbuiltins = Q_COUNTOF(pr_builtin);
