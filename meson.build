@@ -10,15 +10,15 @@ project(
 
 project_dir  = meson.current_source_dir()
 cc = meson.get_compiler('c')
-is_windows = build_machine.system() == 'windows'
+is_windows = host_machine.system() == 'windows'
 deps = []
 lib_search_paths = []
 
 if is_windows
-    if build_machine.cpu_family() == 'x86_64'
+    if host_machine.cpu_family() == 'x86_64'
         codec_path = join_paths(project_dir, 'Windows/codecs/x64')
         sdl_path = join_paths(project_dir, 'Windows\SDL\lib64')
-    elif build_machine.cpu_family() == 'x86'
+    elif host_machine.cpu_family() == 'x86'
         codec_path = join_paths(project_dir, 'Windows/codecs/x86')
         sdl_path = join_paths(project_dir, 'Windows\SDL\lib')
     else
