@@ -14,6 +14,8 @@ is_windows = host_machine.system() == 'windows'
 deps = []
 lib_search_paths = []
 
+codec_path = ''
+
 if is_windows
     if host_machine.cpu_family() == 'x86_64'
         codec_path = join_paths(project_dir, 'Windows/codecs/x64')
@@ -29,7 +31,6 @@ if is_windows
     lib_search_paths += sdl_path
 
     # Maybe there is an cleaner way to get those installed...
-    install_data(codec_path / 'libmad-0.dll', install_dir : get_option('bindir'))
     install_data(sdl_path / 'SDL.dll', install_dir : get_option('bindir'))
 
     add_project_arguments('-D_USE_WINSOCK2', language: 'c')
@@ -48,30 +49,50 @@ if get_option('use_codec_wave')
   add_project_arguments('-DUSE_CODEC_WAVE', language: 'c')
 endif
 if get_option('use_codec_flac')
+  deps += cc.find_library('FLAC', required : true, dirs : lib_search_paths)
   add_project_arguments('-DUSE_CODEC_FALC', language: 'c')
+  if is_windows
+    install_data(codec_path / 'libFLAC-8.dll', install_dir : get_option('bindir'))
+  endif
 endif
 if get_option('use_codec_opus')
   add_project_arguments('-DUSE_CODEC_OPUS', language: 'c')
-  # CFLAGS+= $(shell $(PKG_CONFIG) --cflags opusfile)
-  #CODECLIBS+= $(shell $(PKG_CONFIG) --libs   opusfile)
+  if is_windows
+    install_data(codec_path / 'libopus-0.dll', install_dir : get_option('bindir'))
+  endif
 endif
 if get_option('use_codec_vorbis')
   add_project_arguments('-DUSE_CODEC_VORBIS', language: 'c')
   deps += cc.find_library('vorbis', required : true, dirs : lib_search_paths)
-  deps += cc.find_library('ogg', required : true, dirs : lib_search_paths)
   deps += cc.find_library('vorbisfile', required : true, dirs : lib_search_paths)
+  deps += cc.find_library('ogg', required : true, dirs : lib_search_paths)
+
+  if is_windows
+    install_data(codec_path / 'libvorbis-0.dll', install_dir : get_option('bindir'))
+    install_data(codec_path / 'libvorbisfile-3.dll', install_dir : get_option('bindir'))
+    install_data(codec_path / 'libogg-0.dll', install_dir : get_option('bindir'))
+  endif
 endif
 if get_option('use_codec_mp3')
   add_project_arguments('-DUSE_CODEC_MP3', language: 'c')
   deps += cc.find_library('mad', required : true, dirs : lib_search_paths)
+  if is_windows
+    install_data(codec_path / 'libmad-0.dll', install_dir : get_option('bindir'))
+  endif
 endif
 if get_option('use_codec_mikmod')
   add_project_arguments('-DUSE_CODEC_MIKMOD', language: 'c')
-  # CODECLIBS+= -lmikmod
+  deps += cc.find_library('mikmod', required : true, dirs : lib_search_paths)
+  if is_windows
+    install_data(codec_path / 'libmikmod-3.dll', install_dir : get_option('bindir'))
+  endif
 endif
 if get_option('use_codec_xmp')
   add_project_arguments('-DUSE_CODEC_XMP', language: 'c')
-  # CODECLIBS+= -lxmp
+  deps += cc.find_library('xmp', required : true, dirs : lib_search_paths)
+  if is_windows
+    install_data(codec_path / 'libxmp.dll', install_dir : get_option('bindir'))
+  endif
 endif
 if get_option('use_codec_umx')
   add_project_arguments('-DUSE_CODEC_UMX', language: 'c')
