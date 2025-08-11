@@ -5,7 +5,8 @@ project(
     default_options : [
         'warning_level=3',
         'b_ndebug=if-release',
-    ]
+    ],
+    meson_version: '>=1.1.0',
 )
 
 project_dir  = meson.current_source_dir()
