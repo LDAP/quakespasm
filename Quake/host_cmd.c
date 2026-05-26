@@ -38,6 +38,7 @@ int	current_skill;
 Host_Quit_f
 ==================
 */
+#if 0
 void Host_Quit_f (void)
 {
 	if (key_dest != key_console && cls.state != ca_dedicated)
@@ -50,6 +51,7 @@ void Host_Quit_f (void)
 
 	Sys_Quit ();
 }
+#endif // Host_Quit_f provided by the embedding engine.
 
 //==============================================================================
 //johnfitz -- extramaps management

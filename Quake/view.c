@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // view.c -- player eye positioning
 
 #include "quakedef.h"
+#include "qs_ui_hook.h"
 
 /*
 
@@ -564,6 +565,21 @@ void V_PolyBlend (void)
 	glEnable (GL_DEPTH_TEST);
 	glEnable (GL_TEXTURE_2D);
 	glEnable (GL_ALPHA_TEST);
+#else
+	if (!gl_polyblend.value || !v_blend[3])
+		return;
+
+	GL_SetCanvas (CANVAS_DEFAULT);
+
+	// premultiplied src-over: rgb *= a, alpha = a (uint8 RGBA).
+	const float a = v_blend[3];
+	const uint32_t ar = (uint32_t) (v_blend[0] * a * 255.0f) & 0xFFu;
+	const uint32_t ag = (uint32_t) (v_blend[1] * a * 255.0f) & 0xFFu;
+	const uint32_t ab = (uint32_t) (v_blend[2] * a * 255.0f) & 0xFFu;
+	const uint32_t aa = (uint32_t) (a * 255.0f) & 0xFFu;
+	QS_ui_set_color (ar | (ag << 8) | (ab << 16) | (aa << 24));
+	QS_ui_push_quad (0, 0.0f, 0.0f, (float) glwidth, (float) glheight, 0, 0, 0, 0);
+	QS_ui_set_color (0xFFFFFFFFu);
 #endif
 }
 
