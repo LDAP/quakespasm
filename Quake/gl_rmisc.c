@@ -50,6 +50,17 @@ extern cvar_t gl_zfix; // QuakeSpasm z-fighting fix
 
 extern gltexture_t *playertextures[MAX_SCOREBOARD]; //johnfitz
 
+void GL_BeginRendering (int *x, int *y, int *width, int *height)
+{
+	// merian renders to its own targets — there is no GL window. Seed
+	// glx/gly/glwidth/glheight from vid so the 2D Draw_* paths (which read
+	// these) have a non-zero viewport to map into.
+	*x = *y = 0;
+	*width = vid.width;
+	*height = vid.height;
+}
+void GL_EndRendering (void) {}
+
 cvar_t	r_lightmapwide = {"r_lightmapwide","0",CVAR_ROM};
 
 

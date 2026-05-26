@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // screen.c -- master for refresh, status bar, console, chat, notify, etc
 
 #include "quakedef.h"
+#include "qs_ui_hook.h"
 
 /*
 
@@ -1022,6 +1023,19 @@ void SCR_TileClear (void)
 						r_refdef.vrect.width,
 						glheight - r_refdef.vrect.y - r_refdef.vrect.height - sb_lines);
 	}
+#else
+	if (r_refdef.vrect.x > 0) {
+		Draw_TileClear (0, 0, r_refdef.vrect.x, glheight - sb_lines);
+		Draw_TileClear (r_refdef.vrect.x + r_refdef.vrect.width, 0,
+		                glwidth - r_refdef.vrect.x - r_refdef.vrect.width,
+		                glheight - sb_lines);
+	}
+	if (r_refdef.vrect.y > 0) {
+		Draw_TileClear (r_refdef.vrect.x, 0, r_refdef.vrect.width, r_refdef.vrect.y);
+		Draw_TileClear (r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height,
+		                r_refdef.vrect.width,
+		                glheight - r_refdef.vrect.y - r_refdef.vrect.height - sb_lines);
+	}
 #endif
 }
 
@@ -1118,6 +1132,8 @@ void SCR_UpdateScreen (void)
 	#if 0
 	GLSLGamma_GammaCorrect ();
 	#endif
+
+	QS_ui_frame_ready ();
 
 	GL_EndRendering ();
 }

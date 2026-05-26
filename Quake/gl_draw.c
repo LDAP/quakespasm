@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // draw.c -- 2d drawing
 
 #include "quakedef.h"
+#include "qs_ui_hook.h"
 
 //extern unsigned char d_15to8table[65536]; //johnfitz -- never used
 
@@ -449,6 +450,16 @@ void Draw_CharacterQuad (int x, int y, char num)
 	glVertex2f (x+8, y+8);
 	glTexCoord2f (fcol, frow + size);
 	glVertex2f (x, y+8);
+#else
+	const int row = ((unsigned char) num) >> 4;
+	const int col = ((unsigned char) num) & 15;
+	const float frow = row * 0.0625f;
+	const float fcol = col * 0.0625f;
+	const float size = 0.0625f;
+	const int texnum = char_texture ? (int) char_texture->texnum : 0;
+	QS_ui_push_quad (texnum,
+		(float) x, (float) y, (float) (x + 8), (float) (y + 8),
+		fcol, frow, fcol + size, frow + size);
 #endif
 }
 
@@ -474,6 +485,13 @@ void Draw_Character (int x, int y, int num)
 	Draw_CharacterQuad (x, y, (char) num);
 
 	glEnd ();
+#else
+	if (y <= -8)
+		return;
+	num &= 255;
+	if (num == 32)
+		return;
+	Draw_CharacterQuad (x, y, (char) num);
 #endif
 }
 
@@ -500,6 +518,16 @@ void Draw_String (int x, int y, const char *str)
 	}
 
 	glEnd ();
+#else
+	if (y <= -8)
+		return;
+	while (*str)
+	{
+		if (*str != 32)
+			Draw_CharacterQuad (x, y, *str);
+		str++;
+		x += 8;
+	}
 #endif
 }
 
@@ -527,6 +555,14 @@ void Draw_Pic (int x, int y, qpic_t *pic)
 	glTexCoord2f (gl->sl, gl->th);
 	glVertex2f (x, y+pic->height);
 	glEnd ();
+#else
+	if (scrap_dirty)
+		Scrap_Upload ();
+	const glpic_t *gl = (glpic_t *) pic->data;
+	const int texnum = gl->gltexture ? (int) gl->gltexture->texnum : 0;
+	QS_ui_push_quad (texnum,
+		(float) x, (float) y, (float) (x + pic->width), (float) (y + pic->height),
+		gl->sl, gl->tl, gl->sh, gl->th);
 #endif
 }
 
@@ -592,6 +628,23 @@ void Draw_ConsoleBackground (void)
 			glColor4f (1,1,1,1);
 		}
 	}
+#else
+	qpic_t *pic = Draw_CachePic ("gfx/conback.lmp");
+	pic->width = vid.conwidth;
+	pic->height = vid.conheight;
+
+	const float alpha = con_forcedup ? 1.0f : scr_conalpha.value;
+	if (alpha <= 0.0f)
+		return;
+
+	GL_SetCanvas (CANVAS_CONSOLE);
+
+	// premultiplied white * alpha
+	const uint32_t a = (uint32_t) (alpha * 255.0f) & 0xFFu;
+	const uint32_t rgba = a | (a << 8) | (a << 16) | (a << 24);
+	QS_ui_set_color (rgba);
+	Draw_Pic (0, 0, pic);
+	QS_ui_set_color (0xFFFFFFFFu);
 #endif
 }
 
@@ -623,6 +676,12 @@ void Draw_TileClear (int x, int y, int w, int h)
 	glTexCoord2f ( x/64.0, (y+h)/64.0 );
 	glVertex2f (x, y+h);
 	glEnd ();
+#else
+	const glpic_t *gl = (glpic_t *) draw_backtile->data;
+	const int texnum = gl->gltexture ? (int) gl->gltexture->texnum : 0;
+	QS_ui_push_quad (texnum,
+		(float) x, (float) y, (float) (x + w), (float) (y + h),
+		x / 64.0f, y / 64.0f, (x + w) / 64.0f, (y + h) / 64.0f);
 #endif
 }
 
@@ -654,6 +713,20 @@ void Draw_Fill (int x, int y, int w, int h, int c, float alpha) //johnfitz -- ad
 	glDisable (GL_BLEND); //johnfitz -- for alpha
 	glEnable (GL_ALPHA_TEST); //johnfitz -- for alpha
 	glEnable (GL_TEXTURE_2D);
+#else
+	const byte *pal = (const byte *) d_8to24table;
+	const uint32_t a = (uint32_t) (alpha * 255.0f) & 0xFFu;
+	// premultiply rgb by alpha for src-over blending
+	const uint32_t r = (pal[c * 4 + 0] * a) / 255u;
+	const uint32_t g = (pal[c * 4 + 1] * a) / 255u;
+	const uint32_t b = (pal[c * 4 + 2] * a) / 255u;
+	const uint32_t rgba = r | (g << 8) | (b << 16) | (a << 24);
+
+	QS_ui_set_color (rgba);
+	QS_ui_push_quad (0,
+		(float) x, (float) y, (float) (x + w), (float) (y + h),
+		0.0f, 0.0f, 0.0f, 0.0f);
+	QS_ui_set_color (0xFFFFFFFFu);
 #endif
 }
 
@@ -683,6 +756,13 @@ void Draw_FadeScreen (void)
 	glEnable (GL_TEXTURE_2D);
 	glEnable (GL_ALPHA_TEST);
 	glDisable (GL_BLEND);
+#else
+	GL_SetCanvas (CANVAS_DEFAULT);
+	QS_ui_set_color (0x80000000u); // premult black, alpha 0.5
+	QS_ui_push_quad (0,
+		0.0f, 0.0f, (float) glwidth, (float) glheight,
+		0.0f, 0.0f, 0.0f, 0.0f);
+	QS_ui_set_color (0xFFFFFFFFu);
 #endif
 
 	Sbar_Changed();
@@ -769,6 +849,87 @@ void GL_SetCanvas (canvastype newcanvas)
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity ();
+#else
+	extern vrect_t scr_vrect;
+	float ol = 0, or = 0, ob = 0, ot = 0;
+	int vx = 0, vy = 0, vw = 0, vh = 0;
+	float s;
+	int lines;
+
+	if (newcanvas == currentcanvas)
+		return;
+	currentcanvas = newcanvas;
+
+	switch (newcanvas)
+	{
+	case CANVAS_DEFAULT:
+		ol = 0; or = glwidth; ob = glheight; ot = 0;
+		vx = glx; vy = gly; vw = glwidth; vh = glheight;
+		break;
+	case CANVAS_CONSOLE:
+		lines = vid.conheight - (scr_con_current * vid.conheight / glheight);
+		ol = 0; or = vid.conwidth; ob = vid.conheight + lines; ot = lines;
+		vx = glx; vy = gly; vw = glwidth; vh = glheight;
+		break;
+	case CANVAS_MENU:
+		s = q_min ((float) glwidth / 320.0f, (float) glheight / 200.0f);
+		s = CLAMP (1.0f, scr_menuscale.value, s);
+		ol = 0; or = 640; ob = 200; ot = 0;
+		vx = glx + (glwidth - 320 * s) / 2;
+		vy = gly + (glheight - 200 * s) / 2;
+		vw = 640 * s; vh = 200 * s;
+		break;
+	case CANVAS_SBAR:
+		s = CLAMP (1.0f, scr_sbarscale.value, (float) glwidth / 320.0f);
+		if (cl.gametype == GAME_DEATHMATCH)
+		{
+			ol = 0; or = glwidth / s; ob = 48; ot = 0;
+			vx = glx; vy = gly; vw = glwidth; vh = 48 * s;
+		}
+		else
+		{
+			ol = 0; or = 320; ob = 48; ot = 0;
+			vx = glx + (glwidth - 320 * s) / 2; vy = gly;
+			vw = 320 * s; vh = 48 * s;
+		}
+		break;
+	case CANVAS_WARPIMAGE:
+		ol = 0; or = 128; ob = 0; ot = 128;
+		vx = glx; vy = gly + glheight - gl_warpimagesize;
+		vw = gl_warpimagesize; vh = gl_warpimagesize;
+		break;
+	case CANVAS_CROSSHAIR:
+		s = CLAMP (1.0f, scr_crosshairscale.value, 10.0f);
+		ol = scr_vrect.width / -2 / s;
+		or = scr_vrect.width /  2 / s;
+		ob = scr_vrect.height / 2 / s;
+		ot = scr_vrect.height / -2 / s;
+		vx = scr_vrect.x;
+		vy = glheight - scr_vrect.y - scr_vrect.height;
+		vw = scr_vrect.width & ~1; vh = scr_vrect.height & ~1;
+		break;
+	case CANVAS_BOTTOMLEFT:
+		s = (float) glwidth / vid.conwidth;
+		ol = 0; or = 320; ob = 200; ot = 0;
+		vx = glx; vy = gly; vw = 320 * s; vh = 200 * s;
+		break;
+	case CANVAS_BOTTOMRIGHT:
+		s = (float) glwidth / vid.conwidth;
+		ol = 0; or = 320; ob = 200; ot = 0;
+		vx = glx + glwidth - 320 * s; vy = gly; vw = 320 * s; vh = 200 * s;
+		break;
+	case CANVAS_TOPRIGHT:
+		s = 1;
+		ol = 0; or = 320; ob = 200; ot = 0;
+		vx = glx + glwidth - 320 * s; vy = gly + glheight - 200 * s;
+		vw = 320 * s; vh = 200 * s;
+		break;
+	default:
+		Sys_Error ("GL_SetCanvas: bad canvas type");
+	}
+
+	QS_ui_set_canvas (ol, or, ob, ot, vx, vy, vw, vh);
+	QS_ui_set_scissor (vx, vy, vw, vh);
 #endif
 }
 
@@ -788,5 +949,9 @@ void GL_Set2D (void)
 	glDisable (GL_BLEND);
 	glEnable (GL_ALPHA_TEST);
 	glColor4f (1,1,1,1);
+#else
+	currentcanvas = CANVAS_INVALID;
+	QS_ui_set_color (0xFFFFFFFFu);
+	GL_SetCanvas (CANVAS_DEFAULT);
 #endif
 }

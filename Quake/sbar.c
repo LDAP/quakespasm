@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sbar.c -- status bar code
 
 #include "quakedef.h"
+#include "qs_ui_hook.h"
 
 static int		sb_updates;		// if >= vid.numpages, no update needed
 
@@ -289,6 +290,12 @@ void Sbar_DrawPicAlpha (int x, int y, qpic_t *pic, float alpha)
 	glColor4f(1,1,1,1); // ericw -- changed from glColor3f to work around intel 855 bug with "r_oldwater 0" and "scr_sbaralpha 0"
 	glDisable (GL_BLEND);
 	glEnable (GL_ALPHA_TEST);
+#else
+	const uint32_t a = (uint32_t) (alpha * 255.0f) & 0xFFu;
+	const uint32_t rgba = a | (a << 8) | (a << 16) | (a << 24);
+	QS_ui_set_color (rgba);
+	Draw_Pic (x, y + 24, pic);
+	QS_ui_set_color (0xFFFFFFFFu);
 #endif
 }
 
@@ -342,6 +349,23 @@ void Sbar_DrawScrollString (int x, int y, int width, const char *str)
 	Sbar_DrawString (x - ofs + len, y, str);
 
 	glDisable (GL_SCISSOR_TEST);
+#else
+	const float scale = CLAMP (1.0f, scr_sbarscale.value, (float) glwidth / 320.0f);
+	int left = x * scale;
+	if (cl.gametype != GAME_DEATHMATCH)
+		left += (((float) glwidth - 320.0f * scale) / 2);
+
+	QS_ui_set_scissor (left, 0, (int) (width * scale), glheight);
+
+	const int len = strlen (str) * 8 + 40;
+	const int ofs = ((int) (realtime * 30)) % len;
+	Sbar_DrawString (x - ofs, y, str);
+	Sbar_DrawCharacter (x - ofs + len - 32, y, '/');
+	Sbar_DrawCharacter (x - ofs + len - 24, y, '/');
+	Sbar_DrawCharacter (x - ofs + len - 16, y, '/');
+	Sbar_DrawString (x - ofs + len, y, str);
+
+	QS_ui_set_scissor (0, 0, 0, -1);
 #endif
 }
 
