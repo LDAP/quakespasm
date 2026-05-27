@@ -34,7 +34,7 @@ static void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 	int		srcsample;
 	float	stepscale;
 	int		i;
-	int		sample, samplefrac, fracstep;
+	int		sample, fracstep;
 	sfxcache_t	*sc;
 
 	sc = (sfxcache_t *) Cache_Check (&sfx->cache);
@@ -66,12 +66,13 @@ static void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 	else
 	{
 // general case
-		samplefrac = 0;
-		fracstep = stepscale*256;
+		// samplefrac can overflow 2**31 with very big sounds, see below.
+		int64_t samplefrac = 0;
+		fracstep = (int)(stepscale * 256);
 		for (i = 0; i < outcount; i++)
 		{
-			srcsample = samplefrac >> 8;
-			samplefrac += fracstep;
+			srcsample = (int)(samplefrac >> 8);
+			samplefrac += fracstep; // need int64_t here to prevent overflow...
 			if (inwidth == 2)
 				sample = LittleShort ( ((short *)data)[srcsample] );
 			else
@@ -315,12 +316,16 @@ wavinfo_t GetWavinfo (const char *name, byte *wav, int wavlength)
 		FindNextChunk ("LIST");
 		if (data_p)
 		{
-			if (!strncmp((char *)data_p + 28, "mark", 4))
-			{	// this is not a proper parse, but it works with cooledit...
-				data_p += 24;
-				i = GetLittleLong();	// samples in loop
-				info.samples = info.loopstart + i;
-		//		Con_Printf("looped length: %i\n", i);
+			if (iff_chunk_len >= 32)
+			{
+				if (!strncmp((char *)data_p + 28, "mark", 4))
+				{
+					// this is not a proper parse, but it works with cooledit...
+					data_p += 24;
+					i = GetLittleLong();	// samples in loop
+					info.samples = info.loopstart + i;
+//					Con_Printf("looped length: %i\n", i);
+				}
 			}
 		}
 	}

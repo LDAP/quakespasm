@@ -3,7 +3,7 @@
   ______________________________________________________________________
 
 
-  Page last edited: June 2024.
+  Page last edited: February 2026.
 
 
   1. About
@@ -211,6 +211,12 @@
   Alternatively, have a look at Makefile.darwin for more instructions on
   building from a console.
 
+  Compiling for Escripten:
+
+  Use Makefile.escripten to build. Depends on third party library gl4es:
+  https://github.com/ptitSeb/gl4es
+  See: https://github.com/ololoken/ems-runner-quakespasm for a launcher.
+
 
   Quake '2021 re-release':
 
@@ -220,6 +226,68 @@
 
 
   5. Changes
+
+  Changes in 0.97.0:
+
+  -  Valve BSP, WAD, and external texture support.
+
+  -  The maps console command now takes an optional ModName, e.g.:
+    'maps ad'  or 'maps id1'
+
+  -  New maps_mod console command to list maps only from the active mod.
+
+  -  Add support for -userdir cmdline arg to override the hardcoded
+     user directory.
+
+  -  Reset r_skyfog between maps.
+
+  -  Bump MAX_MODELS/MAX_MOD_KNOWN from 2048 to 4096 (needed by qbj3_hcm
+     from Quake Brutalist Jam 3.)
+
+  -  Support for type 3 (uncompressed grayscale) TGA files (needed by
+     qbj3_rabbit from Quake Brutalist Jam 3.)
+
+  -  Fixes to type 1 (paletted) TGA files support.
+
+  -  SV_PushMove: preserve pusher solid field instead of overwriting
+     with SOLID_BSP.
+
+  -  Fix svc_clientdata weapon byte potentially not being written for
+     mission packs.
+
+  -  Don't spawn monsters when starting map with nomonsters 1.
+
+  -  Disable EXT_packed_pixels support on big endian systems.
+
+  -  Allow any supported music type to be considered as cdrip.
+
+  -  snd_mpg123 now uses 64 bit-only libmpg123 api if built against
+     mpg123 >= 1.33.0
+
+  -  Initial escripten wasm port.
+
+  -  Code cleanups, minor fixes, updates to third party code.
+
+  -  Thanks to Andrei Drexler, Alexey Lysiuk, Roman Turchin, Justin,
+     Jesse Elliott and Alexander Tsoy for patches.
+
+
+  Changes in 0.96.3:
+
+  -  Fix potential infinite loop when playing sounds with loop start >=
+     end (e.g. misc/forcefield.wav from Madfox's kaptlog.zip)
+
+  -  Fix possible overflow when resampling very big sounds (e.g.
+     gram1.wav from the 'A day like no other' mod.)
+
+  -  Change Sky_ClipPoly to allocate on the heap in if MAX_CLIP_VERTS
+     limit is reached (e.g. with lim_daviddg from Liminal Spaces Jam)
+
+  -  Minor code cleanups. Updates to third party code.
+
+  -  Thanks to Andrei Drexler, Vincent Sonnier, Alexey Lysiuk, and
+     Jaycie Ewald for patches.
+
 
   Changes in 0.96.2:
 
@@ -417,6 +485,8 @@
   -  Fixed parsing of the time argument of svc_fog server message. (it
      has been broken for more than 20 years and has never seem to have
      been used.)
+
+  -  image: support for type 1 (paletted) TGA files.
 
   -  Other small improvements elsewhere in the code.
 
@@ -1273,3 +1343,4 @@
   -  Func Quakespasm forum:
      https://celephais.net/board/view_thread.php?id=60452
   -  Inside3D forums: https://forums.insideqc.com
+

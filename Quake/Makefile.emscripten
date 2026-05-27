@@ -1,28 +1,21 @@
-# GNU Makefile for compiling Mac OS X version of QuakeSpasm.
-# Usage: "make -f Makefile.darwin"
-# To cross-compile on Linux hosts, see the build_cross_osx*.sh scripts.
-# "make DEBUG=1" to build a debug client.
-# "make SDL_FRAMEWORK_PATH=/path/to/Frameworks" to specify the directory
-#    containing SDL.framework and override the locally included versions.
-# "make DO_USERDIRS=1" to enable user directories support
-
-# Enable/Disable user directories support
-DO_USERDIRS=0
-
-### Enable/Disable SDL2
-USE_SDL2=0
+# GNU Makefile for QuakeSpasm WASM (Emscripten)
+# Contributed by Roman Turchin
+# Edit this makefile, if necessary, to suit your environment.
+#
+# Build depends on external library gl4es:
+#	 https://github.com/ptitSeb/gl4es
 
 ### Enable/Disable codecs for streaming music support
 USE_CODEC_WAVE=1
-USE_CODEC_FLAC=1
-USE_CODEC_MP3=1
+USE_CODEC_FLAC=0
+USE_CODEC_MP3=0
 USE_CODEC_VORBIS=1
-USE_CODEC_OPUS=1
+USE_CODEC_OPUS=0
 # either of xmp (preferred), mikmod or modplug
 USE_CODEC_MIKMOD=0
-USE_CODEC_XMP=1
+USE_CODEC_XMP=0
 USE_CODEC_MODPLUG=0
-USE_CODEC_UMX=1
+USE_CODEC_UMX=0
 
 # which library to use for mp3 decoding: mad or mpg123
 MP3LIB=mad
@@ -37,7 +30,7 @@ check_gcc = $(shell if echo | $(CC) $(1) -Werror -S -o /dev/null -xc - > /dev/nu
 
 # ---------------------------
 
-MACH_TYPE= $(shell sh detect.sh arch)
+HOST_OS = $(shell uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]')
 
 DEBUG ?= 0
 
@@ -47,48 +40,16 @@ DEBUG ?= 0
 
 CC ?= gcc
 LINKER = $(CC)
-LIPO ?= lipo
 
-STRIP ?= strip -S
+STRIP ?= strip
+PKG_CONFIG ?= pkg-config
 
 CPUFLAGS=
 LDFLAGS?=
 DFLAGS ?=
-CFLAGS ?= -Wall -MMD
-# @rpath can be used when targeting 10.5+
-USE_RPATH=0
-# require 10.5 for 64 bit builds
-ifeq ($(MACH_TYPE),ppc64)
-CFLAGS  +=-mmacosx-version-min=10.5
-LDFLAGS +=-mmacosx-version-min=10.5
-USE_RPATH=1
-endif
-ifeq ($(USE_SDL2),1)
-# sdl2 needs targetting 10.5+
-# as of v2.0.5, sdl2 targets 10.6+
-ifeq ($(MACH_TYPE),x86)
-CFLAGS  +=-mmacosx-version-min=10.6
-LDFLAGS +=-mmacosx-version-min=10.6
-USE_RPATH=1
-endif
-endif
-ifeq ($(MACH_TYPE),x86_64)
-# require 10.6 for amd64 builds, not 10.5 (SDL's requirement.)
-# bundle1.o is needed for dyld_stub_binding_helper
-CFLAGS  +=-mmacosx-version-min=10.6
-LDFLAGS +=-mmacosx-version-min=10.6 -Wl,-lbundle1.o
-USE_RPATH=1
-endif
-ifeq ($(MACH_TYPE),arm64)
-CFLAGS  +=-mmacosx-version-min=11.0
-LDFLAGS +=-mmacosx-version-min=11.0
-USE_RPATH=1
-endif
+CFLAGS ?= -Wall -Wno-trigraphs -MMD
 #CFLAGS += $(call check_gcc,-std=gnu11,)
 CFLAGS += $(CPUFLAGS)
-ifeq ($(USE_RPATH),1)
-LDFLAGS+=-Wl,-rpath,@executable_path/../Frameworks
-endif
 ifneq ($(DEBUG),0)
 DFLAGS += -DDEBUG
 CFLAGS += -g
@@ -104,34 +65,15 @@ define do_strip
 	$(call cmd_strip,$(1));
 endef
 endif
-
-ifeq ($(DO_USERDIRS),1)
-CFLAGS += -DDO_USERDIRS=1
-endif
-
-ifeq ($(USE_SDL2),1)
-CFLAGS += -DUSE_SDL2
-endif
-CFLAGS += -DGL_SILENCE_DEPRECATION=1
-
-# not relying on sdl-config command and assuming
-# /Library/Frameworks/SDL.framework is available
-SDL_CFLAGS =-D_GNU_SOURCE=1 -D_THREAD_SAFE
-SDL_CFLAGS+=-DSDL_FRAMEWORK -DNO_SDL_CONFIG
-ifeq ($(USE_SDL2),1)
-SDL_FRAMEWORK_NAME = SDL2
-else
-SDL_FRAMEWORK_NAME = SDL
-endif
-# default to our local SDL[2].framework for build
-SDL_FRAMEWORK_PATH ?=../MacOSX
-ifneq ($(SDL_FRAMEWORK_PATH),)
-SDL_LIBS  +=-F$(SDL_FRAMEWORK_PATH)
-SDL_CFLAGS+=-F$(SDL_FRAMEWORK_PATH)
-endif
-SDL_LIBS  +=-Wl,-framework,$(SDL_FRAMEWORK_NAME) -Wl,-framework,Cocoa
-
-NET_LIBS   =
+USE_FLAGS=-pthread --use-port=sdl2 --use-port=zlib --use-port=vorbis -O3
+CFLAGS+=$(USE_FLAGS) -I/src/deps/gl4es/include -DUSE_SDL2 -DSDL_FRAMEWORK
+LDFLAGS+= $(USE_FLAGS) -sFULL_ES2 /src/deps/gl4es/lib/libGL.a \
+	-sASYNCIFY -sASYNCIFY_STACK_SIZE=32768 -sSTACK_SIZE=512kb \
+	-sALLOW_MEMORY_GROWTH -sINITIAL_MEMORY=256mb -sMEMORY_GROWTH_LINEAR_STEP=64mb \
+	-sENVIRONMENT=web,worker -sPTHREAD_POOL_SIZE=4 -Wno-pthreads-mem-growth -sMODULARIZE \
+	-lidbfs.js -sCASE_INSENSITIVE_FS=1 \
+	-sEXPORT_ALL -sEXPORTED_RUNTIME_METHODS=callMain,addRunDependency,removeRunDependency \
+	-sEXIT_RUNTIME
 
 ifneq ($(VORBISLIB),vorbis)
 ifneq ($(VORBISLIB),tremor)
@@ -153,7 +95,7 @@ lib_mp3dec=-lmpg123
 endif
 ifeq ($(VORBISLIB),vorbis)
 cpp_vorbisdec=
-lib_vorbisdec=-lvorbisfile -lvorbis -logg
+#lib_vorbisdec=-lvorbisfile -lvorbis -logg
 endif
 ifeq ($(VORBISLIB),tremor)
 cpp_vorbisdec=-DVORBIS_USE_TREMOR
@@ -166,54 +108,43 @@ CFLAGS+= -DUSE_CODEC_WAVE
 endif
 ifeq ($(USE_CODEC_FLAC),1)
 CFLAGS+= -DUSE_CODEC_FLAC
-CODEC_INC = -I../MacOSX/codecs/include
-CODEC_LINK= -L../MacOSX/codecs/lib
 CODECLIBS+= -lFLAC
 endif
 ifeq ($(USE_CODEC_OPUS),1)
+# opus and opusfile put their *.h under <includedir>/opus,
+# but they include the headers without the opus directory
+# prefix and rely on pkg-config. ewww...
 CFLAGS+= -DUSE_CODEC_OPUS
-CODEC_INC = -I../MacOSX/codecs/include
-CODEC_LINK= -L../MacOSX/codecs/lib
-CODECLIBS+= -lopusfile -lopus -logg
+CFLAGS+= $(shell $(PKG_CONFIG) --cflags opusfile)
+CODECLIBS+= $(shell $(PKG_CONFIG) --libs   opusfile)
 endif
 ifeq ($(USE_CODEC_VORBIS),1)
 CFLAGS+= -DUSE_CODEC_VORBIS $(cpp_vorbisdec)
-CODEC_INC = -I../MacOSX/codecs/include
-CODEC_LINK= -L../MacOSX/codecs/lib
 CODECLIBS+= $(lib_vorbisdec)
 endif
 ifeq ($(USE_CODEC_MP3),1)
 CFLAGS+= -DUSE_CODEC_MP3
-CODEC_INC = -I../MacOSX/codecs/include
-CODEC_LINK= -L../MacOSX/codecs/lib
 CODECLIBS+= $(lib_mp3dec)
 endif
 ifeq ($(USE_CODEC_MIKMOD),1)
 CFLAGS+= -DUSE_CODEC_MIKMOD
-CODEC_INC = -I../MacOSX/codecs/include
-CODEC_LINK= -L../MacOSX/codecs/lib
 CODECLIBS+= -lmikmod
 endif
 ifeq ($(USE_CODEC_XMP),1)
 CFLAGS+= -DUSE_CODEC_XMP
-CODEC_INC = -I../MacOSX/codecs/include
-CODEC_LINK= -L../MacOSX/codecs/lib
 CODECLIBS+= -lxmp
 endif
 ifeq ($(USE_CODEC_MODPLUG),1)
 CFLAGS+= -DUSE_CODEC_MODPLUG
-CODEC_INC = -I../MacOSX/codecs/include
-CODEC_LINK= -L../MacOSX/codecs/lib
 CODECLIBS+= -lmodplug
 endif
 ifeq ($(USE_CODEC_UMX),1)
 CFLAGS+= -DUSE_CODEC_UMX
 endif
-CFLAGS+= $(CODEC_INC)
 
-COMMON_LIBS= -Wl,-framework,IOKit -Wl,-framework,OpenGL
+COMMON_LIBS= -lGL -lm
 
-LIBS = $(COMMON_LIBS) $(NET_LIBS) $(CODEC_LINK) $(CODECLIBS)
+LIBS = $(COMMON_LIBS) $(NET_LIBS) $(CODECLIBS)
 
 # ---------------------------
 # objects
@@ -237,9 +168,8 @@ SYSOBJ_CDA = cd_sdl.o
 SYSOBJ_INPUT = in_sdl.o
 SYSOBJ_GL_VID= gl_vidsdl.o
 SYSOBJ_NET = net_bsd.o net_udp.o
-SYSOBJ_LAUNCHER = AppController.o QuakeArgument.o QuakeArguments.o ScreenInfo.o SDLApplication.o
-SYSOBJ_SYS = pl_osx.o sys_sdl_unix.o
-SYSOBJ_MAIN= main_sdl.o SDLMain.o
+SYSOBJ_SYS = pl_linux.o sys_sdl_unix.o
+SYSOBJ_MAIN= main_sdl.o
 
 GLOBJS = \
 	gl_refrag.o \
@@ -303,8 +233,7 @@ OBJS = strlcat.o \
 	sv_user.o \
 	world.o \
 	zone.o \
-	$(SYSOBJ_SYS) \
-	$(SYSOBJ_LAUNCHER) $(SYSOBJ_MAIN)
+	$(SYSOBJ_SYS) $(SYSOBJ_MAIN)
 
 # ---------------------------
 # targets / rules
@@ -317,20 +246,16 @@ all: $(DEFAULT_TARGET)
 
 %.o:	%.c
 	$(CC) $(DFLAGS) -c $(CFLAGS) $(SDL_CFLAGS) -o $@ $<
-%.o:	%.m
-	$(CC) $(DFLAGS) -c $(CFLAGS) $(SDL_CFLAGS) -o $@ $<
-%.o:	../MacOSX/%.m
-	$(CC) $(DFLAGS) -c -I../MacOSX $(CFLAGS) $(SDL_CFLAGS) -o $@ $<
 
 quakespasm:	$(OBJS)
-	$(LINKER) $(OBJS) $(LDFLAGS) $(LIBS) $(SDL_LIBS) -o $@
-	$(call do_strip,$@)
+	$(LINKER) $(OBJS) $(LDFLAGS) $(LIBS) $(SDL_LIBS) -o $@.js
 
 release:	quakespasm
-debug:
-	$(error Use "make DEBUG=1")
 
 clean:
-	$(RM) *.o *.d $(DEFAULT_TARGET)
+	$(RM) *.o *.d $(DEFAULT_TARGET).js $(DEFAULT_TARGET).wasm
+
+install:	quakespasm
+	echo "not impletemented"
 
 sinclude $(OBJS:.o=.d)

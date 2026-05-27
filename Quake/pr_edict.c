@@ -44,7 +44,7 @@ int		pr_edict_size;		// in bytes
 
 unsigned short	pr_crc;
 
-int		type_size[8] = {
+const int	type_size[NUM_TYPE_SIZES] = {
 	1,					// ev_void
 	1,	// sizeof(string_t) / 4		// ev_string
 	1,					// ev_float
@@ -54,8 +54,6 @@ int		type_size[8] = {
 	1,	// sizeof(func_t) / 4		// ev_function
 	1	// sizeof(void *) / 4		// ev_pointer
 };
-
-#define NUM_TYPE_SIZES (int)Q_COUNTOF(type_size)
 
 static ddef_t	*ED_FieldAtOfs (int ofs);
 static qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s);
@@ -198,7 +196,7 @@ static ddef_t *ED_FieldAtOfs (int ofs)
 	ddef_t		*def;
 	int			i;
 
-	for (i = 0; i < progs->numfielddefs; i++)
+	for (i = 1; i < progs->numfielddefs; i++)
 	{
 		def = &pr_fielddefs[i];
 		if (def->ofs == ofs)
@@ -995,6 +993,7 @@ to call ED_CallSpawnFunctions () to let the objects initialize themselves.
 */
 void ED_LoadFromFile (const char *data)
 {
+	const char	*classname;
 	dfunction_t	*func;
 	edict_t		*ent = NULL;
 	int		inhibit = 0;
@@ -1047,8 +1046,16 @@ void ED_LoadFromFile (const char *data)
 			continue;
 		}
 
+		classname = PR_GetString (ent->v.classname);
+		if (sv.nomonsters && !Q_strncmp (classname, "monster_", 8))
+		{
+			ED_Free (ent);
+			inhibit++;
+			continue;
+		}
+
 	// look for the spawn function
-		func = ED_FindFunction ( PR_GetString(ent->v.classname) );
+		func = ED_FindFunction (classname);
 
 		if (!func)
 		{
@@ -1264,6 +1271,17 @@ void PR_LoadProgs (void)
 	pr_effects_mask = PR_FindSupportedEffects ();
 }
 
+/*
+===============
+ED_Nomonsters_f
+===============
+*/
+static void ED_Nomonsters_f (cvar_t *cvar)
+{
+	if (cvar->value)
+		Con_Warning ("\"%s\" can break gameplay.\n", cvar->name);
+}
+
 
 /*
 ===============
@@ -1277,6 +1295,7 @@ void PR_Init (void)
 	Cmd_AddCommand ("edictcount", ED_Count);
 	Cmd_AddCommand ("profile", PR_Profile_f);
 	Cvar_RegisterVariable (&nomonsters);
+	Cvar_SetCallback (&nomonsters, ED_Nomonsters_f);
 	Cvar_RegisterVariable (&gamecfg);
 	Cvar_RegisterVariable (&scratch1);
 	Cvar_RegisterVariable (&scratch2);
