@@ -1,5 +1,4 @@
-/*
- * q_stdinc.h - includes the minimum necessary stdc headers,
+/* q_stdinc.h - includes the minimum necessary stdc headers,
  *		defines common and / or missing types.
  *
  * NOTE:	for net stuff use net_sys.h,
@@ -86,14 +85,20 @@
 #define	Q_MININT	((int)0x80000000)
 #define	Q_MINLONG	((int)0x80000000)
 
-/* Make sure the types really have the right
- * sizes: These macros are from SDL headers.
- */
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
-#define COMPILE_TIME_ASSERT(name, x) _Static_assert(x, #x)
-#elif defined(__cplusplus) && (__cplusplus >= 201103L)
+#ifndef COMPILE_TIME_ASSERT
+#if defined(__cplusplus)
+/* Keep C++ case alone: Some versions of gcc will define __STDC_VERSION__ even when compiling in C++ mode. */
+#if (__cplusplus >= 201103L)
 #define COMPILE_TIME_ASSERT(name, x)  static_assert(x, #x)
-#else /* universal, but may trigger -Wunused-local-typedefs */
+#endif
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define COMPILE_TIME_ASSERT(name, x)  static_assert(x, #x)
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#define COMPILE_TIME_ASSERT(name, x) _Static_assert(x, #x)
+#endif
+#endif /**/
+#ifndef COMPILE_TIME_ASSERT
+/* universal, but may trigger -Wunused-local-typedefs */
 #define COMPILE_TIME_ASSERT(name, x) \
 	typedef int dummy_ ## name[(x) * 2 - 1]
 #endif
@@ -129,16 +134,22 @@ typedef unsigned char		byte;
 /* some structures have qboolean members and the x86 asm code expect
  * those members to be 4 bytes long.  i.e.: qboolean must be 32 bits.  */
 typedef int	qboolean;
-#undef true
-#undef false
 #if !defined(__cplusplus)
-#if defined __STDC_VERSION__ && (__STDC_VERSION__ >= 199901L)
+/* include stdbool.h for C99 or better, or with GCC >= 3 which has a
+ * standarts-compliant header.  */
+#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)) || \
+    (defined(__GNUC__) && (__GNUC__ >= 3))                       || \
+    (defined(_MSC_VER) && (_MSC_VER >= 1910 /* VS2017 */))
 #include <stdbool.h>
+#elif !defined(__bool_true_false_are_defined)
+#define false 0
+#define true  1
+#if defined(__APPLE__) && (defined(__POWERPC__) || defined(__ppc__))
+#define bool  int
 #else
-enum {
-	false = 0,
-	true  = 1
-};
+#define bool  unsigned char
+#endif
+#define __bool_true_false_are_defined 1
 #endif
 #endif /* */
 COMPILE_TIME_ASSERT(falsehood, ((1 != 1) == false));

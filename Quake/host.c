@@ -329,6 +329,7 @@ void Host_WriteConfiguration (void)
 		//johnfitz
 
 		fclose (f);
+		Host_SyncExternalFS();
 	}
 }
 

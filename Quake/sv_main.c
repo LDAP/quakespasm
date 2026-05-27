@@ -33,6 +33,8 @@ int		sv_protocol = PROTOCOL_FITZQUAKE; //johnfitz
 extern qboolean	pr_alpha_supported; //johnfitz
 extern int pr_effects_mask;
 
+extern cvar_t nomonsters;
+
 //============================================================================
 
 /*
@@ -971,14 +973,16 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 	}
 	else
 	{
+		int weapon = 0;
 		for(i=0;i<32;i++)
 		{
 			if ( ((int)ent->v.weapon) & (1<<i) )
 			{
-				MSG_WriteByte (msg, i);
+				weapon = i;
 				break;
 			}
 		}
+		MSG_WriteByte (msg, weapon);
 	}
 
 	//johnfitz -- PROTOCOL_FITZQUAKE
@@ -1537,6 +1541,7 @@ void SV_SpawnServer (const char *server)
 
 	sv.state = ss_loading;
 	sv.paused = false;
+	sv.nomonsters = (nomonsters.value != 0.f);
 
 	sv.time = 1.0;
 
