@@ -34,6 +34,11 @@ if is_windows
     # Maybe there is an cleaner way to get those installed...
     install_data(sdl_path / 'SDL.dll', install_dir : get_option('bindir'))
 
+    # let `meson devenv` find the bundled SDL/codec dlls without installing
+    runtime_env = environment()
+    runtime_env.prepend('PATH', sdl_path, codec_path)
+    meson.add_devenv(runtime_env)
+
     add_project_arguments('-D_USE_WINSOCK2', language: 'c')
 	deps += cc.find_library('ws2_32', required: true)
     deps += cc.find_library('SDL', required : true, dirs : lib_search_paths)
