@@ -251,7 +251,10 @@ void R_ClearParticles (void)
 	active_particles = NULL;
 
 	for (i=0 ;i<r_numparticles ; i++)
+	{
 		particles[i].next = &particles[i+1];
+		particles[i].mv_prev_valid = false; // LDAP
+	}
 	particles[r_numparticles-1].next = NULL;
 }
 
@@ -738,6 +741,7 @@ void CL_RunParticles (void)
 		{
 			active_particles = kill->next;
 			kill->next = free_particles;
+			kill->mv_prev_valid = false; // LDAP
 			free_particles = kill;
 			continue;
 		}
@@ -753,6 +757,7 @@ void CL_RunParticles (void)
 			{
 				p->next = kill->next;
 				kill->next = free_particles;
+				kill->mv_prev_valid = false; // LDAP
 				free_particles = kill;
 				continue;
 			}
