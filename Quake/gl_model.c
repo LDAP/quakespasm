@@ -2940,6 +2940,7 @@ static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
       texflags |= TEXPREF_OVERWRITE; // use cache if available
       int			fwidth, fheight;
       byte		*data;
+      unsigned int	tex_path_id;
       int mark = Hunk_LowMark();
       // TODO: also below in the animated part
       // TODO: don't load the internal stuff if we have external (flip order and check zero)
@@ -2948,29 +2949,29 @@ static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
         pheader->gstextures[i][k] = pheader->nmtextures[i][k] = 0; // init zero
         // try to overwrite albedo/diffuse texture:
         q_snprintf (name, sizeof(name), "%s_%d", loadmodel->name, k);
-        data = Image_LoadImage (name, &fwidth, &fheight);
-        if (data)
+        data = Image_LoadImagePath (name, &fwidth, &fheight, &tex_path_id);
+        if (data && tex_path_id >= loadmodel->path_id)
           pheader->gltextures[i][k] = TexMgr_LoadImage (loadmodel, name, fwidth, fheight,
               SRC_RGBA, data, loadmodel->name, 0, texflags);
         Hunk_FreeToLowMark (mark);
         // try to overwrite fullbright texture:
         q_snprintf (name, sizeof(name), "%s_%d_luma", loadmodel->name, k);
-        data = Image_LoadImage (name, &fwidth, &fheight);
-        if (data)
+        data = Image_LoadImagePath (name, &fwidth, &fheight, &tex_path_id);
+        if (data && tex_path_id >= loadmodel->path_id)
           pheader->fbtextures[i][k] = TexMgr_LoadImage (loadmodel, name, fwidth, fheight,
               SRC_RGBA, data, loadmodel->name, 0, texflags);
         Hunk_FreeToLowMark (mark);
         // try to load normals:
         q_snprintf (name, sizeof(name), "%s_%d_norm", loadmodel->name, k);
-        data = Image_LoadImage (name, &fwidth, &fheight);
-        if (data)
+        data = Image_LoadImagePath (name, &fwidth, &fheight, &tex_path_id);
+        if (data && tex_path_id >= loadmodel->path_id)
           pheader->nmtextures[i][k] = TexMgr_LoadImage (loadmodel, name, fwidth, fheight,
               SRC_RGBA, data, loadmodel->name, 0, texflags);
         Hunk_FreeToLowMark (mark);
         // try to load roughness map:
         q_snprintf (name, sizeof(name), "%s_%d_gloss", loadmodel->name, k);
-        data = Image_LoadImage (name, &fwidth, &fheight);
-        if (data)
+        data = Image_LoadImagePath (name, &fwidth, &fheight, &tex_path_id);
+        if (data && tex_path_id >= loadmodel->path_id)
           pheader->gstextures[i][k] = TexMgr_LoadImage (loadmodel, name, fwidth, fheight,
               SRC_RGBA, data, loadmodel->name, 0, texflags);
         Hunk_FreeToLowMark (mark);
