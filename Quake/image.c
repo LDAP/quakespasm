@@ -201,6 +201,8 @@ byte *Image_LoadTGA (FILE *fin, int *width, int *height)
 	qboolean		upside_down; //johnfitz -- fix for upside-down targas
 	stdio_buffer_t	*buf;
 	targaheader_t	targa_header;
+	byte			palette[256*4];
+	int				i;
 
 	targa_header.id_length = fgetc(fin);
 	targa_header.colormap_type = fgetc(fin);
@@ -216,17 +218,17 @@ byte *Image_LoadTGA (FILE *fin, int *width, int *height)
 	targa_header.pixel_size = fgetc(fin);
 	targa_header.attributes = fgetc(fin);
 
-	if (targa_header.image_type==1)
+	if (targa_header.image_type==1 || targa_header.image_type==9)
 	{
 		if (targa_header.pixel_size != 8 || targa_header.colormap_size != 24 || targa_header.colormap_length > 256)
 			Sys_Error ("Image_LoadTGA: %s has an %ibit palette", loadfilename, targa_header.colormap_type);
 	}
 	else
 	{
-		if (targa_header.image_type!=2 && targa_header.image_type!=3 && targa_header.image_type!=10)
-			Sys_Error("Image_LoadTGA: %s is not a type 2, 3, or 10 targa (%i)", loadfilename, targa_header.image_type);
+		if (targa_header.image_type!=2 && targa_header.image_type!=3 && targa_header.image_type!=10 && targa_header.image_type!=11)
+			Sys_Error("Image_LoadTGA: %s is not a type 1, 2, 3, 9, 10, or 11 targa (%i)", loadfilename, targa_header.image_type);
 
-		if (targa_header.image_type == 3)
+		if (targa_header.image_type == 3 || targa_header.image_type == 11)
 		{
 			if (targa_header.colormap_type != 0 || targa_header.pixel_size != 8)
 				Sys_Error ("Image_LoadTGA: %s is not a 8bit grayscale targa", loadfilename);
@@ -250,10 +252,8 @@ byte *Image_LoadTGA (FILE *fin, int *width, int *height)
 
 	buf = Buf_Alloc(fin);
 
-	if (targa_header.image_type==1) // Uncompressed, paletted images
+	if (targa_header.image_type==1 || targa_header.image_type==9)
 	{
-		byte palette[256*4];
-		int i;
 		//palette data comes first
 		for (i = 0; i < targa_header.colormap_length; i++)
 		{	//this palette data is bgr.
@@ -264,6 +264,10 @@ byte *Image_LoadTGA (FILE *fin, int *width, int *height)
 		}
 		for (i = targa_header.colormap_length*4; i < sizeof(palette); i++)
 			palette[i] = 0;
+	}
+
+	if (targa_header.image_type==1) // Uncompressed, paletted images
+	{
 		for(row=rows-1; row>=0; row--)
 		{
 			realrow = upside_down ? row : rows - 1 - row;
@@ -333,7 +337,7 @@ byte *Image_LoadTGA (FILE *fin, int *width, int *height)
 			}
 		}
 	}
-	else if (targa_header.image_type==10) // Runlength encoded RGB images
+	else // Runlength encoded paletted, RGB, and grayscale images
 	{
 		unsigned char red,green,blue,alphabyte,packetHeader,packetSize,j;
 		for(row=rows-1; row>=0; row--)
@@ -350,6 +354,18 @@ byte *Image_LoadTGA (FILE *fin, int *width, int *height)
 				{
 					switch (targa_header.pixel_size)
 					{
+					case 8:
+						i = Buf_GetC(buf);
+						if (targa_header.image_type == 9)
+						{
+							red = palette[i*4+0];
+							green = palette[i*4+1];
+							blue = palette[i*4+2];
+						}
+						else
+							red = green = blue = i;
+						alphabyte = 255;
+						break;
 					case 24:
 						blue = Buf_GetC(buf);
 						green = Buf_GetC(buf);
@@ -393,6 +409,22 @@ byte *Image_LoadTGA (FILE *fin, int *width, int *height)
 					{
 						switch (targa_header.pixel_size)
 						{
+						case 8:
+							i = Buf_GetC(buf);
+							if (targa_header.image_type == 9)
+							{
+								*pixbuf++ = palette[i*4+0];
+								*pixbuf++ = palette[i*4+1];
+								*pixbuf++ = palette[i*4+2];
+							}
+							else
+							{
+								*pixbuf++ = i;
+								*pixbuf++ = i;
+								*pixbuf++ = i;
+							}
+							*pixbuf++ = 255;
+							break;
 						case 24:
 							blue = Buf_GetC(buf);
 							green = Buf_GetC(buf);
