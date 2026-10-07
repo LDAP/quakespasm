@@ -170,6 +170,13 @@ float GL_WaterAlphaForSurface (msurface_t *fa)
 		return map_wateralpha;
 }
 
+float GL_WaterAlphaForEntitySurface (entity_t *ent, msurface_t *s)
+{
+	if (ent == NULL || ent->alpha == ENTALPHA_DEFAULT)
+		return GL_WaterAlphaForSurface(s);
+	return ENTALPHA_DECODE(ent->alpha);
+}
+
 
 /*
 ===============
@@ -334,13 +341,10 @@ R_ParseWorldspawn
 called at map load
 =============
 */
-extern void QS_worldspawn();
 static void R_ParseWorldspawn (void)
 {
 	char key[128], value[4096];
 	const char *data;
-
-  QS_worldspawn(); // let outside engine know stuff changed
 
 	map_wateralpha = r_wateralpha.value;
 	map_lavaalpha = r_lavaalpha.value;
@@ -386,6 +390,8 @@ static void R_ParseWorldspawn (void)
 }
 
 
+extern void QS_worldspawn();
+
 /*
 ===============
 R_NewMap
@@ -416,6 +422,7 @@ void R_NewMap (void)
 	Sky_NewMap (); //johnfitz -- skybox in worldspawn
 	Fog_NewMap (); //johnfitz -- global fog in worldspawn
 	R_ParseWorldspawn (); //ericw -- wateralpha, lavaalpha, telealpha, slimealpha in worldspawn
+	QS_worldspawn ();
 
 	load_subdivide_size = gl_subdivide_size.value; //johnfitz -- is this the right place to set this?
 }
