@@ -537,24 +537,6 @@ void R_DrawTextureChains_TextureOnly (qmodel_t *model, entity_t *ent, texchain_t
 	}
 }
 
-/*
-================
-GL_WaterAlphaForEntitySurface -- ericw
-
-Returns the water alpha to use for the entity and surface combination.
-================
-*/
-float GL_WaterAlphaForEntitySurface (entity_t *ent, msurface_t *s)
-{
-	float entalpha;
-	if (ent == NULL || ent->alpha == ENTALPHA_DEFAULT)
-		entalpha = GL_WaterAlphaForSurface(s);
-	else
-		entalpha = ENTALPHA_DECODE(ent->alpha);
-	return entalpha;
-  return 0.0;
-}
-
 static GLuint r_world_program;
 extern GLuint gl_bmodel_vbo;
 
