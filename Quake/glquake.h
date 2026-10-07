@@ -451,6 +451,7 @@ void R_DrawWorld_Water (void);
 
 void R_ScaleView_DeleteTexture (void);
 
-// float GL_WaterAlphaForSurface (msurface_t *fa);
+float GL_WaterAlphaForSurface (msurface_t *fa);
+float GL_WaterAlphaForEntitySurface (entity_t *ent, msurface_t *s);
 
 #endif	/* GLQUAKE_H */
