@@ -936,6 +936,8 @@ int SCR_ModalMessage (const char *text, float timeout) //johnfitz -- timeout
 
 	if (cls.state == ca_dedicated)
 		return true;
+	// LDAP: we cannot render handle the key input here
+	return true;
 
 	scr_notifystring = text;
 
