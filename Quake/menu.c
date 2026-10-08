@@ -390,9 +390,12 @@ void M_SinglePlayer_Key (int key)
 		switch (m_singleplayer_cursor)
 		{
 		case 0:
+			// LDAP: we cannot render handle the key input here
+#if 0
 			if (sv.active)
 				if (!SCR_ModalMessage("Are you sure you want to\nstart a new game? (y/n)\n", 0.0f))
 					break;
+#endif
 			IN_Activate();
 			key_dest = key_game;
 			if (sv.active)
