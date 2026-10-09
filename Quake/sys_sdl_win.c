@@ -155,6 +155,29 @@ int Sys_FileType (const char *path)
 }
 
 static char	cwd[1024];
+#ifdef DO_USERDIRS
+static char	userdir[MAX_OSPATH];
+#define SYS_USERDIR	".quakespasm"
+
+static void Sys_GetUserdir (char *dst, size_t dstsize)
+{
+	size_t		n;
+	const char	*home_dir = getenv("USERPROFILE");
+
+	if (home_dir == NULL)
+		Sys_Error ("Couldn't determine userspace directory");
+
+/* what would be a maximum path for a file in the user's directory...
+ * $HOME/SYS_USERDIR/game_dir/dirname1/dirname2/dirname3/filename.ext
+ * still fits in the MAX_OSPATH == 256 definition, but just in case :
+ */
+	n = strlen(home_dir) + strlen(SYS_USERDIR) + 50;
+	if (n >= dstsize)
+		Sys_Error ("Insufficient array size for userspace directory");
+
+	q_snprintf (dst, dstsize, "%s/%s", home_dir, SYS_USERDIR);
+}
+#endif	/* DO_USERDIRS */
 
 static void Sys_GetBasedir (char *argv0, char *dst, size_t dstsize)
 {
@@ -227,10 +250,14 @@ void Sys_Init (void)
 	memset (cwd, 0, sizeof(cwd));
 	Sys_GetBasedir(NULL, cwd, sizeof(cwd));
 	host_parms->basedir = cwd;
-
-	/* userdirs not really necessary for windows guys.
-	 * can be done if necessary, though... */
+#ifndef DO_USERDIRS
 	host_parms->userdir = host_parms->basedir; /* code elsewhere relies on this ! */
+#else
+	memset (userdir, 0, sizeof(userdir));
+	Sys_GetUserdir(userdir, sizeof(userdir));
+	Sys_mkdir (userdir);
+	host_parms->userdir = userdir;
+#endif
 
 	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
 
